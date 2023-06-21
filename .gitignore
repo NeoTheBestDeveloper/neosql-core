@@ -1,0 +1,13 @@
+build
+.cache
+boxfort
+debugbreak
+klib
+libcriterion
+nanomsg 
+nanopb 
+boxfort.wrap
+debugbreak.wrap 
+klib.wrap 
+nanomsg-cmake.wrap 
+nanopb-cmake.wrap
