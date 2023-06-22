@@ -6,6 +6,7 @@ project('neosql-core', 'c',
     'optimization=2',
     'b_lundef=false',
     'strip=true',
+    'prefix=/tmp/install'
 ])
 
 subdir('src')
@@ -41,13 +42,13 @@ sanitizer_flags = [
   '-fno-omit-frame-pointer',
 ]
 
-
 incdir = include_directories('include')
-neosql_core = shared_library('neosql-core', 
+neosql_core = shared_library('neosql_core', 
                              neosql_core_src, 
                              c_args: cc.get_supported_arguments(warning_flags),
                              include_directories: incdir, 
-                             install: true)
+                             install: true,
+                             name_prefix: '_')
 
 if get_option('buildtype') != 'release'
   libcriterion = subproject('libcriterion')
