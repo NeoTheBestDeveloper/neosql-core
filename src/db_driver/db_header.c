@@ -1,14 +1,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "core/src/utils/buf_reader.h"
-#include "core/src/utils/buf_writer.h"
+#include "../utils/buf_reader.h"
+#include "../utils/buf_writer.h"
 
 #include "db_header.h"
 
 #define KILOBYTE(kb) (kb * 1024)
-#define MEGABYTE(mb) (mb * 1024 * 1024)
-#define GIGABYTE(gb) (gb * 1024 * 1024 * 1024)
 
 DbHeader db_header_new(u32 pages_count, StorageType storage_type,
                        PageSize page_size, Addr first_table_node) {

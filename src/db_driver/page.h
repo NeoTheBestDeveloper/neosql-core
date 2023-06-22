@@ -2,7 +2,7 @@
 
 #include <types.h>
 
-#include "core/src/utils/buf_writer.h"
+#include "../utils/buf_writer.h"
 #include "db_header.h"
 
 #define PAGE_HEADER_SIZE (32)

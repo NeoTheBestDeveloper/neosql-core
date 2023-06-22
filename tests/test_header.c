@@ -4,10 +4,9 @@
 #include <unistd.h>
 
 #include "criterion/criterion.h"
-#include "criterion/internal/new_asserts.h"
 #include "criterion/new/assert.h"
 
-#include "../../core/src/db_driver/db_header.h"
+#include "../../src/db_driver/db_header.h"
 
 #define TEMP_DB_PATH ("TEMP_DB.db")
 

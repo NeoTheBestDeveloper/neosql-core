@@ -1,18 +1,18 @@
 project('neosql-core', 'c',
   version: '0.0.1',
   default_options: [
-    'warning_level=everything',
     'c_std=c2x',
     'buildtype=debug',
-    # 'b_sanitize=address,undefined',
     'optimization=2',
-    'b_lundef=false'
+    'b_lundef=false',
+    'strip=true',
 ])
 
-subdir('core')
+subdir('src')
 
 cc = meson.get_compiler('c')
 warning_flags = [
+  '-Weverything',
   '-Wfloat-equal',
   '-Wundef',
   '-Wshadow',
@@ -36,11 +36,20 @@ warning_flags = [
   '-Wno-declaration-after-statement',
 ]
 
+sanitizer_flags = [
+  '-fsanitize=address,undefined',  
+  '-fno-omit-frame-pointer',
+]
 
-add_project_arguments(cc.get_supported_arguments(warning_flags), language: 'c')
 
-incdir = include_directories('core/include')
-neosql_core = shared_library('neosql-core', neosql_core_src, include_directories: incdir)
+incdir = include_directories('include')
+neosql_core = shared_library('neosql-core', 
+                             neosql_core_src, 
+                             c_args: cc.get_supported_arguments(warning_flags),
+                             include_directories: incdir, 
+                             install: true)
 
-libcriterion = subproject('libcriterion')
-subdir('tests/core_tests')
+if get_option('buildtype') != 'release'
+  libcriterion = subproject('libcriterion')
+  subdir('tests')
+endif

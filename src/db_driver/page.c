@@ -1,7 +1,7 @@
 #include <malloc.h>
 #include <unistd.h>
 
-#include "core/src/utils/buf_writer.h"
+#include "../utils/buf_writer.h"
 #include "db_header.h"
 
 #include "page.h"
