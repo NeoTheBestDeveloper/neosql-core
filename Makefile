@@ -18,4 +18,4 @@ test: dev
 	meson test neosql-core: -C build
 
 install: release 
-	meson install -C build_release 
+	meson install -C build_release --destdir .

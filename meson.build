@@ -6,7 +6,6 @@ project('neosql-core', 'c',
     'optimization=2',
     'b_lundef=false',
     'strip=true',
-    'prefix=/tmp/install'
 ])
 
 subdir('src')
