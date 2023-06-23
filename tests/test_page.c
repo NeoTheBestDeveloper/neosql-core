@@ -306,6 +306,5 @@ Test(TestPage, test_page_write_two_pages) {
     }
 
     close(fd);
-    cr_assert(true == false);
     delete_tmp_file(test_id);
 }
