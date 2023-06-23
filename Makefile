@@ -18,7 +18,7 @@ setup:
 	meson setup --reconfigure build
 
 setup-mingw:
-	meson setup --cross-file x86_64-w64-mingw32.txt build-mingw
+	meson setup --cross-file x86_64-w64-mingw32.txt --reconfigure build-mingw
 
 dev:
 	meson compile -j 8 -C build

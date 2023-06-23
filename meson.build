@@ -12,6 +12,8 @@ subdir('src')
 
 cc = meson.get_compiler('c')
 warning_flags = [
+  '-Wall',
+  '-Wextra',
   '-Weverything',
   '-Wfloat-equal',
   '-Wundef',
@@ -34,7 +36,6 @@ warning_flags = [
   '-Wno-padded',
   '-Wno-missing-declarations',
   '-Wno-declaration-after-statement',
-  '--target=x86_64-w64-windows-gnu',
 ]
 
 sanitizer_flags = [
