@@ -89,7 +89,7 @@ Test(TestHeader, test_header_read, .init = create_valid_header) {
 
     cr_assert(eq(u32, header.pages_count, 3));
     cr_assert(eq(u32, header.storage_type, LIST_BLOCKS));
-    cr_assert(addr_cmp(header.first_table_node, addr_new(0, 50)));
+    cr_assert(addr_cmp(header.first_table_addr, addr_new(0, 50)));
 
     close(fd);
     delete_tmp_file(test_id);

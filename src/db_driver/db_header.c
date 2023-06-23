@@ -11,11 +11,11 @@ DbHeader db_header_new_default(void) {
 }
 
 DbHeader db_header_new(u32 pages_count, StorageType storage_type,
-                       Addr first_table_node) {
+                       Addr first_table_addr) {
     DbHeader header = {
         .pages_count = pages_count,
         .storage_type = storage_type,
-        .first_table_node = first_table_node,
+        .first_table_addr = first_table_addr,
     };
 
     return header;
@@ -53,7 +53,7 @@ DbHeaderResult db_header_read(i32 fd) {
         return res;
     }
 
-    buf_reader_read(&reader, &header.first_table_node, 6);
+    buf_reader_read(&reader, &header.first_table_addr, 6);
 
     res.header = header;
     res.status = DB_HEADER_OK;
@@ -67,7 +67,7 @@ DbHeaderResult db_header_write(const DbHeader *header, i32 fd) {
     buf_writer_write(&writer, NEOSQL_MAGIC, 6);
     buf_writer_write(&writer, &header->pages_count, 4);
     buf_writer_write(&writer, (const u8 *)(&header->storage_type), 1);
-    buf_writer_write(&writer, &header->first_table_node, 6);
+    buf_writer_write(&writer, &header->first_table_addr, 6);
 
     write(fd, buf_writer_get_buf(&writer), HEADER_SIZE);
 
