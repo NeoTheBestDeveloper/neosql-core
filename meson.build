@@ -1,5 +1,6 @@
 project('neosql-core', 'c',
   version: '0.0.1',
+  meson_version: '>=1.0.0',
   default_options: [
     'c_std=c2x',
     'buildtype=debug',
