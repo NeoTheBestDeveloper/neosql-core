@@ -1,6 +1,5 @@
-// TODO: Make tests for independent by using tmp files with random names.
-
 #include <fcntl.h>
+#include <limits.h>
 #include <unistd.h>
 
 #include "criterion/criterion.h"
@@ -8,10 +7,24 @@
 
 #include "../../src/db_driver/db_header.h"
 
-#define TEMP_DB_PATH ("TEMP_DB.db")
+typedef enum {
+    TEST_HEADER_READ = 0,
+    TEST_HEADER_WRITE = 1,
+    TEST_HEADER_READ_FAIL_INVALID_MAGIC = 2,
+    TEST_HEADER_READ_FAIL_INVALID_PAGE_SIZE = 3,
+    TEST_HEADER_READ_FAIL_INVALID_HEADER_SIZE = 4,
+    TEST_HEADER_READ_FAIL_INVALID_STORAGE_TYPE = 5,
+} TestId;
 
-void create_valid_header(void) {
-    i32 fd = open(TEMP_DB_PATH, O_CREAT | O_RDWR, 0666);
+char tmp_files[6][NAME_MAX + 1] = {
+    "tmp_file_test_id_0.db", "tmp_file_test_id_1.db", "tmp_file_test_id_2.db",
+    "tmp_file_test_id_3.db", "tmp_file_test_id_4.db", "tmp_file_test_id_5.db",
+};
+
+void delete_tmp_file(TestId test_id) { unlink(tmp_files[test_id]); }
+
+void _create_valid_header(TestId test_id) {
+    i32 fd = open(tmp_files[test_id], O_CREAT | O_RDWR, 0666);
 
     u32 pages_count = 3;
     u8 storage_type = 0; // LIST
@@ -29,19 +42,22 @@ void create_valid_header(void) {
     close(fd);
 }
 
+void create_valid_header(void) { _create_valid_header(TEST_HEADER_READ); }
+
 void create_invalid_magic_header(void) {
-    i32 fd = open(TEMP_DB_PATH, O_CREAT | O_RDWR, 0666);
+    i32 test_id = TEST_HEADER_READ_FAIL_INVALID_MAGIC;
+    _create_valid_header(test_id);
+    i32 fd = open(tmp_files[test_id], O_RDWR, 0666);
 
-    u8 reserved[HEADER_SIZE - 5] = {0};
-
-    write(fd, NEOSQL_MAGIC, 5);
-    write(fd, reserved, HEADER_SIZE - 5);
+    // Corrupt magic
+    write(fd, "ABOBA", 5);
 
     close(fd);
 }
 
 void create_invalid_header_size(void) {
-    i32 fd = open(TEMP_DB_PATH, O_CREAT | O_RDWR, 0666);
+    i32 test_id = TEST_HEADER_READ_FAIL_INVALID_HEADER_SIZE;
+    i32 fd = open(tmp_files[test_id], O_CREAT | O_RDWR, 0666);
 
     u8 reserved[20] = {0};
 
@@ -52,48 +68,35 @@ void create_invalid_header_size(void) {
 }
 
 void create_invalid_page_size(void) {
-    i32 fd = open(TEMP_DB_PATH, O_CREAT | O_RDWR, 0666);
+    i32 test_id = TEST_HEADER_READ_FAIL_INVALID_PAGE_SIZE;
+    _create_valid_header(test_id);
 
-    u32 pages_count = 3;
-    u8 storage_type = 0; // LIST
-    u8 page_size = 10;   // something wrong.
-    u8 first_table_node_bytes[6] = {0};
-    u8 reserved[82] = {0};
+    i32 fd = open(tmp_files[test_id], O_CREAT | O_RDWR, 0666);
+    lseek(fd, 11, SEEK_SET);
 
-    write(fd, NEOSQL_MAGIC, 6);
-    write(fd, &pages_count, 4);
-    write(fd, &storage_type, 1);
+    u8 page_size = 10; // something wrong.
+
     write(fd, &page_size, 1);
-    write(fd, first_table_node_bytes, 6);
-    write(fd, reserved, 82);
 
     close(fd);
 }
 
 void create_invalid_storage_type(void) {
-    i32 fd = open(TEMP_DB_PATH, O_CREAT | O_RDWR, 0666);
+    i32 test_id = TEST_HEADER_READ_FAIL_INVALID_STORAGE_TYPE;
+    _create_valid_header(test_id);
 
-    u32 pages_count = 3;
+    i32 fd = open(tmp_files[test_id], O_CREAT | O_RDWR, 0666);
+    lseek(fd, 10, SEEK_SET);
+
     u8 storage_type = 10; // Something wrong.
-    u8 page_size = 0;     // 4kb
-    u8 first_table_node_bytes[6] = {0};
-    u8 reserved[82] = {0};
 
-    write(fd, NEOSQL_MAGIC, 6);
-    write(fd, &pages_count, 4);
     write(fd, &storage_type, 1);
-    write(fd, &page_size, 1);
-    write(fd, first_table_node_bytes, 6);
-    write(fd, reserved, 82);
-
     close(fd);
 }
 
-void delete_db_file(void) { unlink(TEMP_DB_PATH); }
-
-Test(suite, test_header_read, .init = create_valid_header,
-     .fini = delete_db_file) {
-    i32 fd = open(TEMP_DB_PATH, O_RDONLY);
+Test(TestHeader, test_header_read, .init = create_valid_header) {
+    i32 test_id = TEST_HEADER_READ;
+    i32 fd = open(tmp_files[test_id], O_RDWR, 0666);
     DbHeaderResult res = db_header_read(fd);
 
     cr_expect(res.status == DB_HEADER_OK);
@@ -106,49 +109,58 @@ Test(suite, test_header_read, .init = create_valid_header,
     cr_expect(addr_cmp(header.first_table_node, NullAddr));
 
     close(fd);
+    delete_tmp_file(test_id);
 }
 
-Test(suite, test_header_read_fail_invalid_magic,
-     .init = create_invalid_magic_header, .fini = delete_db_file) {
-    i32 fd = open(TEMP_DB_PATH, O_RDONLY);
-    DbHeaderResult res = db_header_read(fd);
+Test(TestHeader, test_header_read_fail_invalid_magic,
+     .init = create_invalid_magic_header) {
+    i32 test_id = TEST_HEADER_READ_FAIL_INVALID_MAGIC;
+    i32 fd = open(tmp_files[test_id], O_RDONLY);
 
+    DbHeaderResult res = db_header_read(fd);
     cr_expect(res.status == DB_HEADER_INVALID_MAGIC);
 
     close(fd);
+    delete_tmp_file(test_id);
 }
 
-Test(suite, test_header_read_fail_invalid_header_size,
-     .init = create_invalid_header_size, .fini = delete_db_file) {
-    i32 fd = open(TEMP_DB_PATH, O_RDONLY);
-    DbHeaderResult res = db_header_read(fd);
+Test(TestHeader, test_header_read_fail_invalid_header_size,
+     .init = create_invalid_header_size) {
+    i32 test_id = TEST_HEADER_READ_FAIL_INVALID_HEADER_SIZE;
+    i32 fd = open(tmp_files[test_id], O_RDONLY);
 
+    DbHeaderResult res = db_header_read(fd);
     cr_expect(res.status == DB_HEADER_HEADER_SIZE_TOO_SMALL);
 
     close(fd);
+    delete_tmp_file(test_id);
 }
 
-Test(suite, test_header_read_fail_invalid_page_size,
-     .init = create_invalid_page_size, .fini = delete_db_file) {
-    i32 fd = open(TEMP_DB_PATH, O_RDONLY);
-    DbHeaderResult res = db_header_read(fd);
+Test(TestHeader, test_header_read_fail_invalid_page_size,
+     .init = create_invalid_page_size) {
+    i32 test_id = TEST_HEADER_READ_FAIL_INVALID_PAGE_SIZE;
+    i32 fd = open(tmp_files[test_id], O_RDONLY);
 
+    DbHeaderResult res = db_header_read(fd);
     cr_expect(res.status == DB_HEADER_INVALID_PAGE_SIZE);
 
     close(fd);
+    delete_tmp_file(test_id);
 }
 
-Test(suite, test_header_read_fail_invalid_storage_type,
-     .init = create_invalid_storage_type, .fini = delete_db_file) {
-    i32 fd = open(TEMP_DB_PATH, O_RDONLY);
-    DbHeaderResult res = db_header_read(fd);
+Test(TestHeader, test_header_read_fail_invalid_storage_type,
+     .init = create_invalid_storage_type) {
+    i32 test_id = TEST_HEADER_READ_FAIL_INVALID_STORAGE_TYPE;
+    i32 fd = open(tmp_files[test_id], O_RDONLY);
 
-    cr_expect(res.status == DB_HEADER_INVALID_STORAGE_TYPE);
+    DbHeaderResult res = db_header_read(fd);
+    cr_assert(eq(i32, res.status, DB_HEADER_INVALID_STORAGE_TYPE));
 
     close(fd);
+    delete_tmp_file(test_id);
 }
 
-Test(suite, test_header_write, .fini = delete_db_file) {
+Test(TestHeader, test_header_write) {
     u32 pages_count = 3;
     StorageType storage_type = LIST;
     PageSize page_size = FOUR_KB;
@@ -157,7 +169,8 @@ Test(suite, test_header_write, .fini = delete_db_file) {
     DbHeader header =
         db_header_new(pages_count, storage_type, page_size, first_table);
 
-    i32 fd = open(TEMP_DB_PATH, O_CREAT | O_RDWR, 0666);
+    i32 test_id = TEST_HEADER_WRITE;
+    i32 fd = open(tmp_files[test_id], O_CREAT | O_RDWR, 0666);
     DbHeaderResult res = db_header_write(&header, fd);
 
     cr_expect(res.status == DB_HEADER_OK);
@@ -189,4 +202,5 @@ Test(suite, test_header_write, .fini = delete_db_file) {
     cr_assert(addr_cmp(first_table_buf, first_table));
 
     close(fd);
+    delete_tmp_file(test_id);
 }
