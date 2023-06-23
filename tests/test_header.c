@@ -17,8 +17,9 @@ typedef enum {
 } TestId;
 
 char tmp_files[6][NAME_MAX + 1] = {
-    "tmp_file_test_id_0.db", "tmp_file_test_id_1.db", "tmp_file_test_id_2.db",
-    "tmp_file_test_id_3.db", "tmp_file_test_id_4.db", "tmp_file_test_id_5.db",
+    "tmp_file_test_header_id_0.db", "tmp_file_test_header_id_1.db",
+    "tmp_file_test_header_id_2.db", "tmp_file_test_header_id_3.db",
+    "tmp_file_test_header_id_4.db", "tmp_file_test_header_id_5.db",
 };
 
 void delete_tmp_file(TestId test_id) { unlink(tmp_files[test_id]); }

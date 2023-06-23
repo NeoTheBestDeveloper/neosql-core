@@ -7,7 +7,7 @@
 #include "page.h"
 
 Page page_new(PageSize page_size, u16 page_id) {
-    u64 buffer_size = page_size_to_bytes(page_size - PAGE_HEADER_SIZE);
+    u64 buffer_size = page_size_to_bytes(page_size) - PAGE_HEADER_SIZE;
     u8 *buf = (u8 *)calloc(buffer_size, 1);
 
     Page page = {

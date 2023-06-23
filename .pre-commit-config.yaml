@@ -5,3 +5,11 @@ repos:
     hooks:
       - id: commitizen
         stages: [commit-msg]
+
+  - repo: local
+    hooks:
+    - id: tests
+      name: tests
+      entry: make test
+      language: system
+      types: [c]
