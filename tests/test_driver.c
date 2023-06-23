@@ -40,19 +40,19 @@ Test(TestDriver, test_driver_db_create) {
 
     char magic_buf[6];
     u32 pages_count_buf;
-    StorageType storage_type_buf;
+    u8 storage_type_buf;
     Addr first_table_buf;
     u8 header_reserved_buf[HEADER_RESERVED_SIZE];
 
     read(fd, magic_buf, 6);
     read(fd, &pages_count_buf, 4);
-    read(fd, (u8 *)&storage_type_buf, 1);
+    read(fd, &storage_type_buf, 1);
     read(fd, &first_table_buf, 6);
     read(fd, header_reserved_buf, HEADER_RESERVED_SIZE);
 
     cr_assert(0 == strncmp(magic_buf, NEOSQL_MAGIC, 6));
     cr_assert(eq(u32, pages_count_buf, 1));
-    cr_assert(eq(u32, storage_type_buf, LIST_BLOCKS));
+    cr_assert(eq(u8, storage_type_buf, LIST_BLOCKS));
     cr_assert(addr_cmp(first_table_buf, NullAddr));
     cr_assert_arr_eq(header_reserved_buf, header_reserved_mock,
                      HEADER_RESERVED_SIZE);
