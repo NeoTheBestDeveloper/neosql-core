@@ -37,14 +37,14 @@ void _create_valid_page(TestId test_id, i64 page_offset) {
 
     u16 free_space = PAGE_PAYLOAD_SIZE;
     u16 first_free_byte = PAGE_HEADER_SIZE;
-    u8 reserved[PAGE_HEADER_SIZE - 4] = {0};
+    u8 reserved[PAGE_HEADER_RESERVED_SIZE] = {0};
 
     write(fd, header_mock, 100);
     lseek(fd, page_offset, SEEK_CUR);
 
     write(fd, &free_space, 2);
     write(fd, &first_free_byte, 2);
-    write(fd, reserved, PAGE_HEADER_SIZE - 4);
+    write(fd, reserved, PAGE_HEADER_RESERVED_SIZE);
     write(fd, PAGE_ZERO_PAYLOAD, PAGE_PAYLOAD_SIZE);
 
     close(fd);
@@ -148,14 +148,14 @@ Test(TestPage, test_page_write_two_pages) {
         Page page = (i == 0) ? page1 : page2;
 
         u8 payload_buf[PAGE_PAYLOAD_SIZE];
-        u8 reserved[PAGE_HEADER_SIZE - 4];
+        u8 reserved[PAGE_HEADER_RESERVED_SIZE];
         u16 free_space_buf;
         u16 first_free_byte_buf;
 
         lseek(fd, HEADER_SIZE + PAGE_SIZE * i, SEEK_SET);
         read(fd, &free_space_buf, 2);
         read(fd, &first_free_byte_buf, 2);
-        read(fd, reserved, PAGE_HEADER_SIZE - 4);
+        read(fd, reserved, PAGE_HEADER_RESERVED_SIZE);
         read(fd, payload_buf, PAGE_PAYLOAD_SIZE);
 
         cr_assert(eq(u16, page.free_space, free_space_buf));

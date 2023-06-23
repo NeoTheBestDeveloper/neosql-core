@@ -6,7 +6,7 @@
 
 #define NEOSQL_MAGIC ("NEOSQL")
 #define HEADER_SIZE (100)
-#define HEADER_RESERVED (83)
+#define HEADER_RESERVED_SIZE (83)
 
 typedef enum {
     LIST_BLOCKS = 0,

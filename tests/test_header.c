@@ -28,14 +28,14 @@ void _create_valid_header(TestId test_id) {
 
     u32 pages_count = 3;
     u8 storage_type = LIST_BLOCKS; // LIST
-    u8 reserved[HEADER_RESERVED] = {0};
+    u8 reserved[HEADER_RESERVED_SIZE] = {0};
     Addr first_table = addr_new(0, 50);
 
     write(fd, NEOSQL_MAGIC, 6);
     write(fd, &pages_count, 4);
     write(fd, &storage_type, 1);
     write(fd, &first_table, 6);
-    write(fd, reserved, HEADER_RESERVED);
+    write(fd, reserved, HEADER_RESERVED_SIZE);
 
     close(fd);
 }

@@ -7,7 +7,7 @@
 #include "db_header.h"
 
 DbHeader db_header_new_default(void) {
-    return db_header_new(0, LIST_BLOCKS, NullAddr);
+    return db_header_new(1, LIST_BLOCKS, NullAddr);
 }
 
 DbHeader db_header_new(u32 pages_count, StorageType storage_type,

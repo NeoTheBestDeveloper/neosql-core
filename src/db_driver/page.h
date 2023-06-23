@@ -2,11 +2,11 @@
 
 #include <types.h>
 
-#include "../utils/buf_writer.h"
 #include "db_header.h"
 
 #define PAGE_SIZE (4096)
 #define PAGE_HEADER_SIZE (32)
+#define PAGE_HEADER_RESERVED_SIZE (PAGE_HEADER_SIZE - 4)
 #define PAGE_PAYLOAD_SIZE (PAGE_SIZE - PAGE_HEADER_SIZE)
 
 typedef struct {
