@@ -36,6 +36,7 @@ warning_flags = [
   '-Wno-padded',
   '-Wno-missing-declarations',
   '-Wno-declaration-after-statement',
+  '-Wno-suggest-attribute=const',
 ]
 
 add_project_arguments(cc.get_supported_arguments(warning_flags), language: 'c')

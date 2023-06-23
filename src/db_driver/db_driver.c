@@ -9,8 +9,6 @@
 DbDriverResult db_driver_open_db(i32 db_fd) {
     DbDriver db_driver = {
         .db_fd = db_fd,
-        .cached_pages_cnt = 0,
-        .cached_pages = NULL,
     };
 
     DbHeaderResult header_res = db_header_read(db_driver.db_fd);
@@ -32,13 +30,11 @@ DbDriverResult db_driver_create_db(i32 db_fd) {
     DbDriver db_driver = {
         .db_fd = db_fd,
         .header = db_header_new_default(),
-        .cached_pages_cnt = 0,
-        .cached_pages = NULL,
     };
 
     db_header_write(&db_driver.header, db_fd);
 
-    Page zeroed_page = page_new(FOUR_KB, 0);
+    Page zeroed_page = page_new(0);
     page_write(&zeroed_page, db_fd);
 
     DbDriverResult res = {
@@ -46,11 +42,13 @@ DbDriverResult db_driver_create_db(i32 db_fd) {
         .status = DB_DRIVER_OK,
     };
 
+    page_free(&zeroed_page);
+
     return res;
 }
 
 void db_driver_free(DbDriver *driver) {
-    for (u16 i = 0; i < driver->cached_pages_cnt; ++i) {
-        page_free(driver->cached_pages->page + i);
-    }
+    //     for (u16 i = 0; i < driver->cached_pages_cnt; ++i) {
+    //         page_free(driver->cached_pages->page + i);
+    //     }
 }

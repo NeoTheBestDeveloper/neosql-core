@@ -6,32 +6,27 @@
 
 #include "page.h"
 
-Page page_new(PageSize page_size, u16 page_id) {
-    u64 buffer_size = page_size_to_bytes(page_size) - PAGE_HEADER_SIZE;
-    u8 *buf = (u8 *)calloc(buffer_size, 1);
+static u64 calc_page_payload_offset(u16 page_id) {
+    return page_id * PAGE_SIZE + HEADER_SIZE;
+}
 
+Page page_new(u16 page_id) {
     Page page = {
         .first_free_byte = PAGE_HEADER_SIZE,
-        .free_space = (u16)(buffer_size),
-        .writer = buf_writer_new(buf, buffer_size),
+        .free_space = (u16)(PAGE_PAYLOAD_SIZE),
         .page_id = page_id,
-        .page_size = page_size,
+        .payload = (u8 *)calloc(PAGE_PAYLOAD_SIZE, 1),
     };
 
     return page;
 }
 
-const u8 *page_get_buf(const Page *page) {
-    return buf_writer_get_buf(&page->writer);
-}
-
-Page page_read(PageSize page_size, u16 page_id, i32 fd) {
+Page page_read(u16 page_id, i32 fd) {
     Page page = {
         .page_id = page_id,
-        .page_size = page_size,
     };
 
-    u64 offset = page_id * page_size_to_bytes(page_size) + HEADER_SIZE;
+    u64 offset = calc_page_payload_offset(page_id);
     lseek(fd, (i64)offset, SEEK_SET);
 
     u8 page_header[PAGE_HEADER_SIZE] = {0};
@@ -40,31 +35,27 @@ Page page_read(PageSize page_size, u16 page_id, i32 fd) {
     page.free_space = *(u16 *)page_header;
     page.first_free_byte = *(u16 *)(page_header + 2);
 
-    u64 buffer_size = page_size_to_bytes(page_size) - PAGE_HEADER_SIZE;
-    u8 *buf = (u8 *)malloc(buffer_size);
-
-    read(fd, buf, buffer_size);
-
-    page.writer = buf_writer_new(buf, buffer_size);
+    page.payload = (u8 *)malloc(PAGE_PAYLOAD_SIZE);
+    read(fd, page.payload, PAGE_PAYLOAD_SIZE);
 
     return page;
 }
 
 void page_write(const Page *page, i32 fd) {
-    u64 offset =
-        page->page_id * page_size_to_bytes(page->page_size) + HEADER_SIZE;
+    u64 offset = calc_page_payload_offset(page->page_id);
 
     u8 page_header[PAGE_HEADER_SIZE] = {0};
-    BufWriter writer = buf_writer_new(page_header, PAGE_HEADER_SIZE);
+    BufWriter header_writer = buf_writer_new(page_header, PAGE_HEADER_SIZE);
 
-    buf_writer_write(&writer, &page->free_space, 2);
-    buf_writer_write(&writer, &page->first_free_byte, 2);
+    buf_writer_write(&header_writer, &page->free_space, 2);
+    buf_writer_write(&header_writer, &page->first_free_byte, 2);
 
     lseek(fd, (i64)offset, SEEK_SET);
 
-    write(fd, buf_writer_get_buf(&writer), PAGE_HEADER_SIZE);
-    write(fd, buf_writer_get_buf(&page->writer),
-          page_size_to_bytes(page->page_size) - PAGE_HEADER_SIZE);
+    const u8 *header = buf_writer_get_buf(&header_writer);
+
+    write(fd, header, PAGE_HEADER_SIZE);
+    write(fd, page->payload, PAGE_PAYLOAD_SIZE);
 }
 
-void page_free(Page *page) { free(page->writer.buf); }
+void page_free(Page *page) { free(page->payload); }

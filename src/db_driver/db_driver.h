@@ -6,17 +6,18 @@
 
 #include "db_header.h"
 
-#define MAX_CACHED_PAGES_CNT (1024)
+// #define MAX_CACHED_PAGES_CNT (1024)
+
+// typedef struct {
+//     Page *page;
+//     bool is_changed;
+// } CachedPage;
+
+// CachedPage *cached_pages; // TODO: cache container instead this.
+// u16 cached_pages_cnt;
 
 typedef struct {
-    Page *page;
-    bool is_changed;
-} CachedPage;
-
-typedef struct {
-    CachedPage *cached_pages; // TODO: cache container instead this.
     i32 db_fd;
-    u16 cached_pages_cnt;
     DbHeader header;
 } DbDriver;
 
