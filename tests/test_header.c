@@ -30,11 +30,13 @@ void _create_valid_header(TestId test_id) {
     u8 storage_type = LIST_BLOCKS; // LIST
     u8 reserved[HEADER_RESERVED_SIZE] = {0};
     Addr first_table = addr_new(0, 50);
+    Addr last_table = addr_new(0, 500);
 
     write(fd, NEOSQL_MAGIC, 6);
     write(fd, &pages_count, 4);
     write(fd, &storage_type, 1);
     write(fd, &first_table, 6);
+    write(fd, &last_table, 6);
     write(fd, reserved, HEADER_RESERVED_SIZE);
 
     close(fd);
@@ -89,7 +91,8 @@ Test(TestHeader, test_header_read, .init = create_valid_header) {
 
     cr_assert(eq(u32, header.pages_count, 3));
     cr_assert(eq(u32, header.storage_type, LIST_BLOCKS));
-    cr_assert(addr_cmp(header.first_table_addr, addr_new(0, 50)));
+    cr_assert(addr_cmp(header.first_table, addr_new(0, 50)));
+    cr_assert(addr_cmp(header.last_table, addr_new(0, 500)));
 
     close(fd);
     delete_tmp_file(test_id);
@@ -135,8 +138,10 @@ Test(TestHeader, test_header_write) {
     u32 pages_count = 3;
     StorageType storage_type = LIST_BLOCKS;
     Addr first_table = addr_new(0, 60);
+    Addr last_table = addr_new(0, 600);
 
-    DbHeader header = db_header_new(pages_count, storage_type, first_table);
+    DbHeader header =
+        db_header_new(pages_count, storage_type, first_table, last_table);
 
     TestId test_id = TEST_HEADER_WRITE;
     i32 fd = open(tmp_files[test_id], O_CREAT | O_RDWR | O_BINARY, 0666);
@@ -159,10 +164,12 @@ Test(TestHeader, test_header_write) {
     cr_assert(eq(u32, storage_type, storage_type_buf));
 
     Addr first_table_buf;
+    Addr last_table_buf;
 
-    read(fd, &first_table_buf.page_id, 4);
-    read(fd, &first_table_buf.offset, 2);
+    read(fd, &first_table_buf, 6);
+    read(fd, &last_table_buf, 6);
     cr_assert(addr_cmp(first_table_buf, first_table));
+    cr_assert(addr_cmp(last_table_buf, last_table));
 
     close(fd);
     delete_tmp_file(test_id);

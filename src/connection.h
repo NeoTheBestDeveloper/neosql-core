@@ -9,6 +9,7 @@ typedef struct {
     DbDriver db_driver;
     i32 fd;
     bool is_active;
+    bool has_db;
 } Connection;
 
 typedef enum {

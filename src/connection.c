@@ -43,6 +43,8 @@ ConnectionResult connection_open(const char *path) {
             return res;
         }
 
+        conn.db_driver = driver_res.driver;
+        conn.has_db = true;
     } else {
         fd = open(path, O_RDWR | O_CREAT | O_BINARY, 0700);
 
@@ -55,12 +57,10 @@ ConnectionResult connection_open(const char *path) {
             res.status = CONNECTION_ERROR_CANNOT_READ_FILE;
             return res;
         }
-
-        driver_res = db_driver_create_db(fd);
+        conn.has_db = false;
     }
 
     conn.fd = fd;
-    conn.db_driver = driver_res.driver;
     conn.path = strdup(path);
     conn.is_active = true;
 

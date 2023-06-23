@@ -13,6 +13,6 @@ typedef struct {
 Addr addr_new(u32 page_id, u16 offset);
 
 // Calculate absolute addres offset from file start.
-u64 addr_offset(Addr addr);
+i64 addr_offset(Addr addr);
 
 bool addr_cmp(Addr addr1, Addr addr2);

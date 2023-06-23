@@ -10,7 +10,7 @@ Addr addr_new(u32 page_id, u16 offset) {
     return addr;
 }
 
-u64 addr_offset(Addr addr) { return addr.page_id * PAGE_SIZE + addr.offset; }
+i64 addr_offset(Addr addr) { return addr.page_id * PAGE_SIZE + addr.offset; }
 
 bool addr_cmp(Addr addr1, Addr addr2) {
     return (addr1.page_id == addr2.page_id) && (addr1.offset == addr2.offset);

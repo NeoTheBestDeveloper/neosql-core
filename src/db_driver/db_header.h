@@ -6,7 +6,7 @@
 
 #define NEOSQL_MAGIC ("NEOSQL")
 #define HEADER_SIZE (100)
-#define HEADER_RESERVED_SIZE (83)
+#define HEADER_RESERVED_SIZE (77)
 
 typedef enum {
     LIST_BLOCKS = 0,
@@ -16,7 +16,8 @@ typedef enum {
 typedef struct {
     u32 pages_count;
     StorageType storage_type; // At file must be u8 number.
-    Addr first_table_addr;
+    Addr first_table;
+    Addr last_table;
 } DbHeader;
 
 typedef enum {
@@ -32,7 +33,7 @@ typedef struct {
 } DbHeaderResult;
 
 DbHeader db_header_new(u32 pages_count, StorageType storage_type,
-                       Addr first_table_addr);
+                       Addr first_table, Addr last_table);
 DbHeader db_header_new_default(void);
 
 DbHeaderResult db_header_read(i32 fd);

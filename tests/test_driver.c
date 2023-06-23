@@ -42,18 +42,21 @@ Test(TestDriver, test_driver_db_create) {
     u32 pages_count_buf;
     u8 storage_type_buf;
     Addr first_table_buf;
+    Addr last_table_buf;
     u8 header_reserved_buf[HEADER_RESERVED_SIZE];
 
     read(fd, magic_buf, 6);
     read(fd, &pages_count_buf, 4);
     read(fd, &storage_type_buf, 1);
     read(fd, &first_table_buf, 6);
+    read(fd, &last_table_buf, 6);
     read(fd, header_reserved_buf, HEADER_RESERVED_SIZE);
 
     cr_assert(0 == strncmp(magic_buf, NEOSQL_MAGIC, 6));
     cr_assert(eq(u32, pages_count_buf, 1));
     cr_assert(eq(u8, storage_type_buf, LIST_BLOCKS));
     cr_assert(addr_cmp(first_table_buf, NullAddr));
+    cr_assert(addr_cmp(last_table_buf, NullAddr));
     cr_assert_arr_eq(header_reserved_buf, header_reserved_mock,
                      HEADER_RESERVED_SIZE);
 
@@ -86,11 +89,13 @@ Test(TestDriver, test_driver_db_open) {
     u32 page_count = 4;
     StorageType storage_type = B_TREE_BLOCKS;
     Addr first_table = addr_new(2, 70);
+    Addr last_table = addr_new(2, 700);
 
     write(fd, NEOSQL_MAGIC, 6);
     write(fd, &page_count, 4);
     write(fd, &storage_type, 1);
     write(fd, &first_table, 6);
+    write(fd, &last_table, 6);
     write(fd, header_reserved_mock, HEADER_RESERVED_SIZE);
     lseek(fd, 0, SEEK_SET);
 
@@ -103,7 +108,8 @@ Test(TestDriver, test_driver_db_open) {
 
     cr_assert(eq(u32, driver.header.pages_count, page_count));
     cr_assert(eq(u32, driver.header.storage_type, storage_type));
-    cr_assert(addr_cmp(driver.header.first_table_addr, first_table));
+    cr_assert(addr_cmp(driver.header.first_table, first_table));
+    cr_assert(addr_cmp(driver.header.last_table, last_table));
 
     close(fd);
     delete_tmp_file(test_id);

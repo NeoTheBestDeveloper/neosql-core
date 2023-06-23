@@ -23,3 +23,9 @@ e_test_connection = executable('e_test_connection', 'test_connection.c',
                           link_with: neosql_core, 
                           include_directories: incdir)
 test('Test connection.', e_test_connection)
+
+e_test_block = executable('e_test_block', 'test_block.c', 
+                          dependencies: criterion,
+                          link_with: neosql_core, 
+                          include_directories: incdir)
+test('Test block.', e_test_block)
