@@ -3,4 +3,5 @@ db_src = files(
   'addr.c',
   'db_driver.c',
   'page.c',
+  'block.c',
 )

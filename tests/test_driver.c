@@ -46,7 +46,7 @@ Test(TestDriver, test_driver_db_create) {
 
     read(fd, magic_buf, 6);
     read(fd, &pages_count_buf, 4);
-    read(fd, &storage_type_buf, 1);
+    read(fd, (u8 *)&storage_type_buf, 1);
     read(fd, &first_table_buf, 6);
     read(fd, header_reserved_buf, HEADER_RESERVED_SIZE);
 
