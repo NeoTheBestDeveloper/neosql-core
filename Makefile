@@ -14,22 +14,20 @@ release-mingw:
 	meson setup --cross-file x86_64-w64-mingw32.txt --buildtype=release --reconfigure build-mingw_release
 	meson compile -j 8 -C build-mingw_release
 
-setup:
-	meson setup -Db_sanitize=address,undefined --reconfigure build 
-
-setup-mingw:
-	meson setup --cross-file x86_64-w64-mingw32.txt --reconfigure build-mingw
-
 dev:
+	meson setup -Db_sanitize=address,undefined --reconfigure build 
 	meson compile -j 8 -C build
 
 dev-mingw:
+	meson setup --cross-file x86_64-w64-mingw32.txt --reconfigure build-mingw
 	meson compile -j 8 -C build-mingw
 
-test: setup dev
+test: 
+	meson setup -Db_sanitize=address,undefined --reconfigure build 
 	meson test neosql-core: -C build
 
 test-mingw: setup-mingw dev-mingw 
+	meson setup --cross-file x86_64-w64-mingw32.txt --reconfigure build-mingw
 	meson test neosql-core: -C build-mingw
 
 install: release release-mingw
