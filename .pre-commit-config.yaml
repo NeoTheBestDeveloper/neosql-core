@@ -4,5 +4,4 @@ repos:
     rev: 3.4.0
     hooks:
       - id: commitizen
-      - id: commitizen-branch
-        stages: [push]
+        stages: [push, commit]
