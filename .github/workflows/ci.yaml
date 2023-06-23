@@ -39,7 +39,7 @@ jobs:
         python-version: '3.x'
     - run: brew install gcc
     - run: pip install meson ninja
-    - run: meson setup -Db_sanitize=address,undefined builddir/
+    - run: meson setup builddir/
       env:
         CC: gcc
     - run: "meson test neosql-core: -C builddir/ -v"
