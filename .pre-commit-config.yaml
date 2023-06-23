@@ -4,4 +4,4 @@ repos:
     rev: 3.4.0
     hooks:
       - id: commitizen
-        stages: [push, commit]
+        stages: [commit-msg]
