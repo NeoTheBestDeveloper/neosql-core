@@ -1,44 +1,68 @@
 name: CI Pipeline for neosql-core.
 
 on:
-  - push
-  - pull_request
+  push:
+    paths:
+      - "**.c"
+      - "**.h"
+  pull_request:
+    paths:
+      - "**.c"
+      - "**.h"
 
 jobs:
 
-  test-linux:
+  linux:
     runs-on: ubuntu-latest
     steps:
-
-    - name: Download source code.
-      uses: actions/checkout@v1
-
-    - name: Set up GCC.
-      uses: egor-tensin/setup-gcc@v1
-
-    - name: Run tests for linux
-      uses: BSFishy/meson-build@v1.0.3
+    - uses: actions/checkout@v1
+    - uses: actions/setup-python@v1
       with:
-        action: test
-        directory: build
-        options: "neosql-core:"
+        python-version: '3.x'
+    - run: pip install meson ninja
+    - run: meson setup builddir/
+      env:
+        CC: gcc
+    - run: "meson test neosql-core: -C builddir/ -v"
+    - uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: Linux_Meson_Testlog
+        path: builddir/meson-logs/testlog.txt
 
-  test-windows:
+  macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - run: brew install gcc
+    - run: pip install meson ninja
+    - run: meson setup builddir/
+      env:
+        CC: gcc
+    - run: "meson test neosql-core: -C builddir/ -v"
+    - uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: MacOS_Meson_Testlog
+        path: builddir/meson-logs/testlog.txt
+
+  windows:
     runs-on: windows-latest
     steps:
-
-    - name: Download source code.
-      uses: actions/checkout@v1
-
-    - name: Set up MinGW.
-      uses: egor-tensin/setup-mingw@v2
-
-    - name: Run tests for windows.
-      uses: BSFishy/meson-build@v1.0.3
+    - uses: actions/checkout@v1
+    - uses: actions/setup-python@v1
       with:
-        action: test
-        setup-options: --cross-file x86_64-w64-mingw32.txt
-        directory: build
-        options: "neosql-core:"
-        meson-version: 1.0.0
-
+        python-version: '3.x'
+    - run: pip install meson ninja
+    - run: meson setup builddir/
+      env:
+        CC: gcc
+    - run: "meson test neosql-core: -C builddir/ -v"
+    - uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: Windows_Meson_Testlog
+        path: builddir/meson-logs/testlog.txt
