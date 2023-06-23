@@ -1,7 +1,9 @@
 project('neosql-core', 'c',
   version: '0.0.1',
   meson_version: '>=1.0.0',
+  license: 'MIT',
   default_options: [
+    'warning_level=everything',
     'c_std=c2x',
     'buildtype=debug',
     'optimization=2',
@@ -13,9 +15,6 @@ subdir('src')
 
 cc = meson.get_compiler('c')
 warning_flags = [
-  '-Wall',
-  '-Wextra',
-  '-Weverything',
   '-Wfloat-equal',
   '-Wundef',
   '-Wshadow',
@@ -39,15 +38,12 @@ warning_flags = [
   '-Wno-declaration-after-statement',
 ]
 
-sanitizer_flags = [
-  '-fsanitize=address,undefined',  
-  '-fno-omit-frame-pointer',
-]
+add_project_arguments(cc.get_supported_arguments(warning_flags), language: 'c')
+
 
 incdir = include_directories('include')
 neosql_core = shared_library('neosql_core', 
                              neosql_core_src, 
-                             c_args: cc.get_supported_arguments(warning_flags),
                              include_directories: incdir, 
                              install: true,
                              name_prefix: '_')

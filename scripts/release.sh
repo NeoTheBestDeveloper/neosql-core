@@ -8,4 +8,3 @@ meson compile -j 8 -C build-mingw_release
 
 meson install -C build_release  --destdir .
 meson install -C build-mingw_release --destdir .
-
