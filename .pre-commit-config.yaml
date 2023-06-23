@@ -10,5 +10,5 @@ repos:
     hooks:
     - id: tests
       name: tests
-      entry: make test
+      entry: sh scripts/test.sh
       language: system
