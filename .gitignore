@@ -12,3 +12,10 @@ debugbreak.wrap
 klib.wrap 
 nanomsg-cmake.wrap 
 nanopb-cmake.wrap
+libffi 
+libgit2
+libffi.wrap
+libgit2.wrap
+libgit2-cmake.wrap
+build-mingw
+build-mingw_release

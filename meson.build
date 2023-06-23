@@ -34,6 +34,7 @@ warning_flags = [
   '-Wno-padded',
   '-Wno-missing-declarations',
   '-Wno-declaration-after-statement',
+  '--target=x86_64-w64-windows-gnu',
 ]
 
 sanitizer_flags = [
