@@ -1,0 +1,43 @@
+name: CI Pipeline for neosql-core.
+
+on:
+  - push
+  - pull_request
+
+jobs:
+
+  test-linux:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Download source code.
+      uses: actions/checkout@v1
+
+    - name: Set up GCC.
+      uses: egor-tensin/setup-gcc@v1
+
+    - name: Run tests for linux
+      uses: BSFishy/meson-build@v1.0.3
+      with:
+        action: test
+        directory: build
+        options: "neosql-core:"
+
+  test-windows:
+    runs-on: windows-latest
+    steps:
+
+    - name: Download source code.
+      uses: actions/checkout@v1
+
+    - name: Set up MinGW.
+      uses: egor-tensin/setup-mingw@v2
+
+    - name: Run tests for windows.
+      uses: BSFishy/meson-build@v1.0.3
+      with:
+        action: test
+        setup-options: --cross-file x86_64-w64-mingw32.txt
+        directory: build
+        options: "neosql-core:"
+

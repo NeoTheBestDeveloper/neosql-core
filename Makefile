@@ -20,7 +20,7 @@ setup:
 setup-mingw:
 	meson setup --cross-file x86_64-w64-mingw32.txt --reconfigure build-mingw
 
-dev:
+dev: setup
 	meson compile -j 8 -C build
 
 dev-mingw:
@@ -29,7 +29,7 @@ dev-mingw:
 test: dev
 	meson test neosql-core: -C build
 
-test-mingw: dev-mingw
+test-mingw: setup-mingw dev-mingw 
 	meson test neosql-core: -C build-mingw
 
 install: release release-mingw
