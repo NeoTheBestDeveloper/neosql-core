@@ -29,8 +29,8 @@ void _create_valid_header(TestId test_id) {
     u32 pages_count = 3;
     u8 storage_type = LIST_BLOCKS; // LIST
     u8 reserved[HEADER_RESERVED_SIZE] = {0};
-    Addr first_table = addr_new(0, 50);
-    Addr last_table = addr_new(0, 500);
+    Addr first_table = (Addr){.page_id = 0, .offset = 50};
+    Addr last_table = (Addr){.page_id = 0, .offset = 500};
 
     write(fd, NEOSQL_MAGIC, 6);
     write(fd, &pages_count, 4);
@@ -137,8 +137,8 @@ Test(TestHeader, test_header_read_fail_invalid_storage_type,
 Test(TestHeader, test_header_write) {
     u32 pages_count = 3;
     StorageType storage_type = LIST_BLOCKS;
-    Addr first_table = addr_new(0, 60);
-    Addr last_table = addr_new(0, 600);
+    Addr first_table = (Addr){.page_id = 0, .offset = 60};
+    Addr last_table = (Addr){.page_id = 0, .offset = 600};
 
     DbHeader header =
         db_header_new(pages_count, storage_type, first_table, last_table);

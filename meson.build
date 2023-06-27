@@ -3,7 +3,7 @@ project('neosql-core', 'c',
   meson_version: '>=1.0.0',
   license: 'MIT',
   default_options: [
-    'warning_level=everything',
+    'warning_level=0',
     'c_std=c2x',
     'buildtype=debug',
     'optimization=2',
@@ -39,7 +39,7 @@ warning_flags = [
   '-Wno-suggest-attribute=const',
 ]
 
-add_project_arguments(cc.get_supported_arguments(warning_flags), language: 'c')
+# add_project_arguments(cc.get_supported_arguments(warning_flags), language: 'c')
 
 
 incdir = include_directories('include')

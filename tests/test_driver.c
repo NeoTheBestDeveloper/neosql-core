@@ -9,6 +9,7 @@
 #include "criterion/new/assert.h"
 
 #include "../src/db_driver/db_driver.h"
+#include "../src/db_driver/defaults.h"
 #include "../src/utils/buf_reader.h"
 
 typedef enum {
@@ -53,28 +54,31 @@ Test(TestDriver, test_driver_db_create) {
     read(fd, header_reserved_buf, HEADER_RESERVED_SIZE);
 
     cr_assert(0 == strncmp(magic_buf, NEOSQL_MAGIC, 6));
-    cr_assert(eq(u32, pages_count_buf, 1));
+    cr_assert(eq(u32, pages_count_buf, DEFAULT_EMPTY_DB_ZERO_PAGES_COUNT));
     cr_assert(eq(u8, storage_type_buf, LIST_BLOCKS));
     cr_assert(addr_cmp(first_table_buf, NullAddr));
     cr_assert(addr_cmp(last_table_buf, NullAddr));
     cr_assert_arr_eq(header_reserved_buf, header_reserved_mock,
                      HEADER_RESERVED_SIZE);
 
-    u16 free_space_buf;
-    u16 first_free_byte_buf;
-    u8 page_reserved_buf[PAGE_HEADER_RESERVED_SIZE];
-    u8 page_payload_buf[PAGE_PAYLOAD_SIZE];
+    for (u16 i = 0; i < DEFAULT_EMPTY_DB_ZERO_PAGES_COUNT; ++i) {
+        u16 free_space_buf;
+        u16 first_free_byte_buf;
+        u8 page_reserved_buf[PAGE_HEADER_RESERVED_SIZE];
+        u8 page_payload_buf[PAGE_PAYLOAD_SIZE];
 
-    read(fd, &free_space_buf, 2);
-    read(fd, &first_free_byte_buf, 2);
-    read(fd, page_reserved_buf, PAGE_HEADER_RESERVED_SIZE);
-    read(fd, page_payload_buf, PAGE_PAYLOAD_SIZE);
+        read(fd, &free_space_buf, 2);
+        read(fd, &first_free_byte_buf, 2);
+        read(fd, page_reserved_buf, PAGE_HEADER_RESERVED_SIZE);
+        read(fd, page_payload_buf, PAGE_PAYLOAD_SIZE);
 
-    cr_assert(eq(u16, free_space_buf, PAGE_PAYLOAD_SIZE));
-    cr_assert(eq(u16, first_free_byte_buf, PAGE_HEADER_SIZE));
-    cr_assert_arr_eq(page_reserved_buf, page_reserved_mock,
-                     PAGE_HEADER_RESERVED_SIZE);
-    cr_assert_arr_eq(page_payload_buf, page_payload_mock, PAGE_PAYLOAD_SIZE);
+        cr_assert(eq(u16, free_space_buf, PAGE_PAYLOAD_SIZE));
+        cr_assert(eq(u16, first_free_byte_buf, 0));
+        cr_assert_arr_eq(page_reserved_buf, page_reserved_mock,
+                         PAGE_HEADER_RESERVED_SIZE);
+        cr_assert_arr_eq(page_payload_buf, page_payload_mock,
+                         PAGE_PAYLOAD_SIZE);
+    }
 
     db_driver_free(&res.driver);
     delete_tmp_file(test_id);
@@ -88,8 +92,8 @@ Test(TestDriver, test_driver_db_open) {
 
     u32 page_count = 4;
     StorageType storage_type = B_TREE_BLOCKS;
-    Addr first_table = addr_new(2, 70);
-    Addr last_table = addr_new(2, 700);
+    Addr first_table = (Addr){.page_id = 2, .offset = 70};
+    Addr last_table = (Addr){.page_id = 2, .offset = 700};
 
     write(fd, NEOSQL_MAGIC, 6);
     write(fd, &page_count, 4);

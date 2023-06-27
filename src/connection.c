@@ -4,10 +4,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <os.h>
-
 #include "connection.h"
-#include "src/db_driver/db_driver.h"
+#include "driver/driver.h"
+#include "os.h"
 
 static bool is_file_exists(const char *path) { return 0 == access(path, F_OK); }
 static bool is_file_writable(const char *path) {
@@ -19,42 +18,43 @@ static bool is_file_readable(const char *path) {
 
 ConnectionResult connection_open(const char *path) {
     Connection conn;
-    DbDriverResult driver_res;
+    DriverResult driver_res;
+
     ConnectionResult res = {
-        .status = CONNECTION_OK,
+        .status = CONNECTION_ok,
     };
 
-    i32 fd;
+    int32_t fd;
     if (is_file_exists(path)) {
         if (!is_file_writable(path)) {
-            res.status = CONNECTION_ERROR_CANNOT_WRITE_FILE;
+            res.status = CONNECTION_cannot_write_file;
             return res;
         }
 
         if (!is_file_readable(path)) {
-            res.status = CONNECTION_ERROR_CANNOT_READ_FILE;
+            res.status = CONNECTION_cannot_read_file;
             return res;
         }
 
         fd = open(path, O_RDWR | O_BINARY);
-        driver_res = db_driver_open_db(fd);
-        if (driver_res.status == DB_DRIVER_INVALID_OR_CORRUPTED_HEADER) {
-            res.status = CONNECTION_ERROR_IVALID_OR_CORRUPTED_FILE;
+        driver_res = driver_open_db(fd);
+        if (driver_res.status == DRIVER_invalid_or_corrupted_header) {
+            res.status = CONNECTION_ivalid_or_corrupted_file;
             return res;
         }
 
-        conn.db_driver = driver_res.driver;
+        conn.driver = driver_res.driver;
         conn.has_db = true;
     } else {
         fd = open(path, O_RDWR | O_CREAT | O_BINARY, 0700);
 
         if (fd < 0 && errno == EACCES) {
-            res.status = CONNECTION_ERROR_CANNOT_WRITE_FILE;
+            res.status = CONNECTION_cannot_write_file;
             return res;
         }
 
         if (!is_file_readable(path)) {
-            res.status = CONNECTION_ERROR_CANNOT_READ_FILE;
+            res.status = CONNECTION_cannot_read_file;
             return res;
         }
         conn.has_db = false;
@@ -73,5 +73,6 @@ void connection_close(Connection *conn) {
 
     close(conn->fd);
     free(conn->path);
-    db_driver_free(&conn->db_driver);
+
+    driver_free(&(conn->driver));
 }

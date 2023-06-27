@@ -7,24 +7,26 @@ clean:
 	rm -rf build-mingw_release
 
 release:
-	meson setup --reconfigure --buildtype=release  build_release
+	meson setup --wipe --buildtype=release  build_release
 	meson compile -j 8 -C build_release
 
 release-mingw:
-	meson setup --cross-file x86_64-w64-mingw32.txt --buildtype=release --reconfigure build-mingw_release
+	meson setup --cross-file x86_64-w64-mingw32.txt --buildtype=release --wipe build-mingw_release
 	meson compile -j 8 -C build-mingw_release
 
+setup:
+	meson setup -Db_sanitize=address,undefined --wipe build 
+
 dev:
-	meson setup -Db_sanitize=address,undefined --reconfigure build 
 	meson compile -j 8 -C build
 
+test: 
+	meson test neosql-core: -C build
+
 dev-mingw:
-	meson setup --cross-file x86_64-w64-mingw32.txt --reconfigure build-mingw
+	meson setup --cross-file x86_64-w64-mingw32.txt --wipe build-mingw
 	meson compile -j 8 -C build-mingw
 
-test: 
-	meson setup -Db_sanitize=address,undefined --reconfigure build 
-	meson test neosql-core: -C build
 
 test-mingw: dev-mingw 
 	meson test neosql-core: -C build-mingw
