@@ -7,7 +7,7 @@
 #include "utils/buf_writer.h"
 
 ListBlock list_block_new(ListBlockType type, uint8_t const *payload,
-                         int64_t payload_size) {
+                         uint64_t payload_size) {
     ListBlock block = {
         .type = type,
         .is_overflow = (payload_size > PAGE_PAYLOAD_SIZE),

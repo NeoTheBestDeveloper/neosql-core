@@ -9,8 +9,8 @@
 #define HEADER_RESERVED_SIZE (77)
 
 typedef enum {
-    STORAGE_TYPE_list = 0,
-    STORAGE_TYPE_btree = 1,
+    STORAGE_TYPE_LIST = 0,
+    STORAGE_TYPE_BTREE = 1,
 } StorageType;
 
 typedef struct {
@@ -21,10 +21,10 @@ typedef struct {
 } Header;
 
 typedef enum {
-    HEADER_ok = 0,
-    HEADER_invalid_magic = 1,
-    HEADER_invalid_storage_type = 2,
-    HEADER_file_size_too_small = 3,
+    HEADER_OK = 0,
+    HEADER_INVALID_MAGIC = 1,
+    HEADER_INVALID_STORAGE_TYPE = 2,
+    HEADER_FILE_SIZE_TOO_SMALL = 3,
 } HeaderResultStatus;
 
 typedef struct {
@@ -37,4 +37,4 @@ Header header_default(void);
 Header header_new(StorageType storage_type);
 
 HeaderResult header_read(int32_t fd);
-HeaderResult header_write(Header, int32_t fd);
+void header_write(Header const *, int32_t fd);

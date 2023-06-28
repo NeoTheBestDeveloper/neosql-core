@@ -1,12 +1,12 @@
 #include <fcntl.h>
 #include <limits.h>
-#include <os.h>
 #include <unistd.h>
 
 #include "criterion/criterion.h"
 #include "criterion/new/assert.h"
 
-#include "../../src/db_driver/db_header.h"
+#include "driver/header.h"
+#include "os.h"
 
 typedef enum {
     TEST_HEADER_READ = 0,
@@ -24,11 +24,11 @@ char tmp_files[5][100 + 1] = {
 void delete_tmp_file(TestId test_id) { unlink(tmp_files[test_id]); }
 
 void _create_valid_header(TestId test_id) {
-    i32 fd = open(tmp_files[test_id], O_CREAT | O_WRONLY | O_BINARY, 0666);
+    int32_t fd = open(tmp_files[test_id], O_CREAT | O_WRONLY | O_BINARY, 0666);
 
-    u32 pages_count = 3;
-    u8 storage_type = LIST_BLOCKS; // LIST
-    u8 reserved[HEADER_RESERVED_SIZE] = {0};
+    int32_t pages_count = 3;
+    uint8_t storage_type = STORAGE_TYPE_LIST; // LIST
+    uint8_t reserved[HEADER_RESERVED_SIZE] = {0};
     Addr first_table = (Addr){.page_id = 0, .offset = 50};
     Addr last_table = (Addr){.page_id = 0, .offset = 500};
 
@@ -47,7 +47,7 @@ void create_valid_header(void) { _create_valid_header(TEST_HEADER_READ); }
 void create_invalid_magic_header(void) {
     TestId test_id = TEST_HEADER_READ_FAIL_INVALID_MAGIC;
     _create_valid_header(test_id);
-    i32 fd = open(tmp_files[test_id], O_WRONLY | O_BINARY, 0666);
+    int32_t fd = open(tmp_files[test_id], O_WRONLY | O_BINARY, 0666);
 
     // Corrupt magic
     write(fd, "ABOBA", 5);
@@ -56,10 +56,10 @@ void create_invalid_magic_header(void) {
 }
 
 void create_invalid_header_size(void) {
-    i32 test_id = TEST_HEADER_READ_FAIL_INVALID_HEADER_SIZE;
-    i32 fd = open(tmp_files[test_id], O_CREAT | O_RDWR | O_BINARY, 0666);
+    int32_t test_id = TEST_HEADER_READ_FAIL_INVALID_HEADER_SIZE;
+    int32_t fd = open(tmp_files[test_id], O_CREAT | O_RDWR | O_BINARY, 0666);
 
-    u8 reserved[20] = {0};
+    uint8_t reserved[20] = {0};
 
     write(fd, NEOSQL_MAGIC, 5);
     write(fd, reserved, 20);
@@ -71,28 +71,28 @@ void create_invalid_storage_type(void) {
     TestId test_id = TEST_HEADER_READ_FAIL_INVALID_STORAGE_TYPE;
     _create_valid_header(test_id);
 
-    i32 fd = open(tmp_files[test_id], O_WRONLY | O_BINARY, 0666);
+    int32_t fd = open(tmp_files[test_id], O_WRONLY | O_BINARY, 0666);
     lseek(fd, 10, SEEK_SET);
 
-    u8 storage_type = 10; // Something wrong.
+    uint8_t storage_type = 10; // Something wrong.
 
     write(fd, &storage_type, 1);
     close(fd);
 }
 
 Test(TestHeader, test_header_read, .init = create_valid_header) {
-    i32 test_id = TEST_HEADER_READ;
-    i32 fd = open(tmp_files[test_id], O_RDONLY | O_BINARY, 0666);
-    DbHeaderResult res = db_header_read(fd);
+    int32_t test_id = TEST_HEADER_READ;
+    int32_t fd = open(tmp_files[test_id], O_RDONLY | O_BINARY, 0666);
+    HeaderResult res = header_read(fd);
 
-    cr_assert(eq(u32, res.status, DB_HEADER_OK));
+    cr_assert(eq(u32, res.status, HEADER_OK));
 
-    DbHeader header = res.header;
+    Header header = res.header;
 
-    cr_assert(eq(u32, header.pages_count, 3));
-    cr_assert(eq(u32, header.storage_type, LIST_BLOCKS));
-    cr_assert(addr_cmp(header.first_table, addr_new(0, 50)));
-    cr_assert(addr_cmp(header.last_table, addr_new(0, 500)));
+    cr_assert(eq(i32, header.pages_count, 3));
+    cr_assert(eq(u32, header.storage_type, STORAGE_TYPE_LIST));
+    cr_assert(addr_cmp(header.first_table, (Addr){0, 50}));
+    cr_assert(addr_cmp(header.last_table, (Addr){0, 500}));
 
     close(fd);
     delete_tmp_file(test_id);
@@ -101,10 +101,10 @@ Test(TestHeader, test_header_read, .init = create_valid_header) {
 Test(TestHeader, test_header_read_fail_invalid_magic,
      .init = create_invalid_magic_header) {
     TestId test_id = TEST_HEADER_READ_FAIL_INVALID_MAGIC;
-    i32 fd = open(tmp_files[test_id], O_RDONLY | O_BINARY);
+    int32_t fd = open(tmp_files[test_id], O_RDONLY | O_BINARY);
 
-    DbHeaderResult res = db_header_read(fd);
-    cr_assert(eq(u32, res.status, DB_HEADER_INVALID_MAGIC));
+    HeaderResult res = header_read(fd);
+    cr_assert(eq(u32, res.status, HEADER_INVALID_MAGIC));
 
     close(fd);
     delete_tmp_file(test_id);
@@ -113,10 +113,10 @@ Test(TestHeader, test_header_read_fail_invalid_magic,
 Test(TestHeader, test_header_read_fail_invalid_header_size,
      .init = create_invalid_header_size) {
     TestId test_id = TEST_HEADER_READ_FAIL_INVALID_HEADER_SIZE;
-    i32 fd = open(tmp_files[test_id], O_RDONLY | O_BINARY);
+    int32_t fd = open(tmp_files[test_id], O_RDONLY | O_BINARY);
 
-    DbHeaderResult res = db_header_read(fd);
-    cr_assert(eq(u32, res.status, DB_HEADER_HEADER_SIZE_TOO_SMALL));
+    HeaderResult res = header_read(fd);
+    cr_assert(eq(u32, res.status, HEADER_FILE_SIZE_TOO_SMALL));
 
     close(fd);
     delete_tmp_file(test_id);
@@ -125,29 +125,31 @@ Test(TestHeader, test_header_read_fail_invalid_header_size,
 Test(TestHeader, test_header_read_fail_invalid_storage_type,
      .init = create_invalid_storage_type) {
     TestId test_id = TEST_HEADER_READ_FAIL_INVALID_STORAGE_TYPE;
-    i32 fd = open(tmp_files[test_id], O_RDONLY | O_BINARY);
+    int32_t fd = open(tmp_files[test_id], O_RDONLY | O_BINARY);
 
-    DbHeaderResult res = db_header_read(fd);
-    cr_assert(eq(u32, res.status, DB_HEADER_INVALID_STORAGE_TYPE));
+    HeaderResult res = header_read(fd);
+    cr_assert(eq(u32, res.status, HEADER_INVALID_STORAGE_TYPE));
 
     close(fd);
     delete_tmp_file(test_id);
 }
 
 Test(TestHeader, test_header_write) {
-    u32 pages_count = 3;
-    StorageType storage_type = LIST_BLOCKS;
+    int32_t pages_count = 3;
+    StorageType storage_type = STORAGE_TYPE_LIST;
     Addr first_table = (Addr){.page_id = 0, .offset = 60};
     Addr last_table = (Addr){.page_id = 0, .offset = 600};
 
-    DbHeader header =
-        db_header_new(pages_count, storage_type, first_table, last_table);
+    Header header = {
+        .pages_count = pages_count,
+        .first_table = first_table,
+        .last_table = last_table,
+        .storage_type = storage_type,
+    };
 
     TestId test_id = TEST_HEADER_WRITE;
-    i32 fd = open(tmp_files[test_id], O_CREAT | O_RDWR | O_BINARY, 0666);
-    DbHeaderResult res = db_header_write(&header, fd);
-
-    cr_expect(res.status == DB_HEADER_OK);
+    int32_t fd = open(tmp_files[test_id], O_CREAT | O_RDWR | O_BINARY, 0666);
+    header_write(&header, fd);
 
     lseek(fd, 0, SEEK_SET);
 
@@ -155,9 +157,9 @@ Test(TestHeader, test_header_write) {
     read(fd, magic_buf, 6);
     cr_assert(eq(str, magic_buf, NEOSQL_MAGIC));
 
-    u32 pages_count_buf = 0;
+    int32_t pages_count_buf = 0;
     read(fd, &pages_count_buf, 4);
-    cr_assert(eq(u32, pages_count_buf, pages_count));
+    cr_assert(eq(i32, pages_count_buf, pages_count));
 
     StorageType storage_type_buf = 0;
     read(fd, &storage_type_buf, 1);

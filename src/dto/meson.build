@@ -1,4 +1,4 @@
 dto_src = files(
-  'record.c',
-  'table.c',
+  # 'record.c',
+  # 'table.c',
 )

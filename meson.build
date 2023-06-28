@@ -39,7 +39,7 @@ warning_flags = [
   '-Wno-suggest-attribute=const',
 ]
 
-# add_project_arguments(cc.get_supported_arguments(warning_flags), language: 'c')
+add_project_arguments(cc.get_supported_arguments(warning_flags), language: 'c')
 
 
 incdir = include_directories('include')

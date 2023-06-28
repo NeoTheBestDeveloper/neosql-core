@@ -5,16 +5,15 @@
 typedef struct {
     char *path;
     int32_t fd;
-    bool has_db;
-    bool is_active;
     Driver driver;
+    bool is_active;
 } Connection;
 
 typedef enum {
-    CONNECTION_ok = 0,
-    CONNECTION_cannot_read_file = 1,
-    CONNECTION_cannot_write_file = 2,
-    CONNECTION_ivalid_or_corrupted_file = 3,
+    CONNECTION_OK = 0,
+    CONNECTION_CANNOT_READ_FILE = 1,
+    CONNECTION_CANNOT_WRITE_FILE = 2,
+    CONNECTION_IVALID_OR_CORRUPTED_DATA = 3,
 } ConnectionResultStatus;
 
 typedef struct {
@@ -23,4 +22,4 @@ typedef struct {
 } ConnectionResult;
 
 ConnectionResult connection_open(char const *path);
-void connection_close(Connection *conn);
+void connection_close(Connection *);

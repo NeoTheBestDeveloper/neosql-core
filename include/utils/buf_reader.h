@@ -5,8 +5,8 @@
 // This reader use stream reading.
 typedef struct {
     const uint8_t *buf;
-    int64_t buf_size;
-    int64_t buf_offset;
+    uint64_t buf_size;
+    uint64_t buf_offset;
 } BufReader;
 
 typedef enum {
@@ -15,9 +15,10 @@ typedef enum {
 } BufReaderResultStatus;
 
 typedef struct {
-    int64_t readen;
+    uint64_t readen;
     BufReaderResultStatus status;
 } BufReaderResult;
 
-BufReader buf_reader_new(void const *buf, int64_t buf_size);
-BufReaderResult buf_reader_read(BufReader *reader, void *dst, int64_t dst_size);
+BufReader buf_reader_new(void const *buf, uint64_t buf_size);
+BufReaderResult buf_reader_read(BufReader *reader, void *dst,
+                                uint64_t dst_size);

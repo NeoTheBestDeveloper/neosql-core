@@ -9,62 +9,75 @@
 #include "os.h"
 
 static bool is_file_exists(const char *path) { return 0 == access(path, F_OK); }
+
 static bool is_file_writable(const char *path) {
     return 0 == access(path, W_OK);
 }
+
 static bool is_file_readable(const char *path) {
     return 0 == access(path, R_OK);
 }
 
-ConnectionResult connection_open(const char *path) {
-    Connection conn;
-    DriverResult driver_res;
-
+static ConnectionResult _open_existen_db(char const *path) {
     ConnectionResult res = {
-        .status = CONNECTION_ok,
+        .status = CONNECTION_OK,
     };
 
-    int32_t fd;
-    if (is_file_exists(path)) {
-        if (!is_file_writable(path)) {
-            res.status = CONNECTION_cannot_write_file;
-            return res;
-        }
-
-        if (!is_file_readable(path)) {
-            res.status = CONNECTION_cannot_read_file;
-            return res;
-        }
-
-        fd = open(path, O_RDWR | O_BINARY);
-        driver_res = driver_open_db(fd);
-        if (driver_res.status == DRIVER_invalid_or_corrupted_header) {
-            res.status = CONNECTION_ivalid_or_corrupted_file;
-            return res;
-        }
-
-        conn.driver = driver_res.driver;
-        conn.has_db = true;
-    } else {
-        fd = open(path, O_RDWR | O_CREAT | O_BINARY, 0700);
-
-        if (fd < 0 && errno == EACCES) {
-            res.status = CONNECTION_cannot_write_file;
-            return res;
-        }
-
-        if (!is_file_readable(path)) {
-            res.status = CONNECTION_cannot_read_file;
-            return res;
-        }
-        conn.has_db = false;
+    if (!is_file_writable(path)) {
+        res.status = CONNECTION_CANNOT_WRITE_FILE;
+        return res;
     }
 
-    conn.fd = fd;
-    conn.path = strdup(path);
-    conn.is_active = true;
+    if (!is_file_readable(path)) {
+        res.status = CONNECTION_CANNOT_READ_FILE;
+        return res;
+    }
 
-    res.conn = conn;
+    int32_t fd = open(path, O_RDWR | O_BINARY, 0700);
+    DriverResult driver_res = driver_open_db(fd);
+
+    if (driver_res.status == DRIVER_INVALID_OR_CORRUPTED_HEADER) {
+        res.status = CONNECTION_IVALID_OR_CORRUPTED_DATA;
+        return res;
+    }
+
+    res.conn.driver = driver_res.driver;
+
+    return res;
+}
+
+static ConnectionResult _open_noexisten_db(char const *path) {
+    ConnectionResult res = {
+        .status = CONNECTION_OK,
+    };
+
+    int32_t fd = open(path, O_RDWR | O_CREAT | O_BINARY, 0700);
+
+    if (fd < 0 && errno == EACCES) {
+        res.status = CONNECTION_CANNOT_WRITE_FILE;
+        return res;
+    }
+
+    if (!is_file_readable(path)) {
+        res.status = CONNECTION_CANNOT_READ_FILE;
+        return res;
+    }
+
+    res.conn.driver = driver_create_db(fd);
+
+    return res;
+}
+
+ConnectionResult connection_open(char const *path) {
+    ConnectionResult res = (is_file_exists(path)) ? _open_existen_db(path)
+                                                  : _open_noexisten_db(path);
+
+    if (res.status == CONNECTION_OK) {
+        res.conn.fd = res.conn.driver.fd;
+        res.conn.is_active = true;
+        res.conn.path = strdup(path);
+    }
+
     return res;
 }
 

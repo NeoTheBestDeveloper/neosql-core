@@ -5,6 +5,7 @@ clean:
 	rm -rf build_release
 	rm -rf build-mingw
 	rm -rf build-mingw_release
+	rm -rf .cache
 
 release:
 	meson setup --wipe --buildtype=release  build_release

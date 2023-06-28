@@ -7,7 +7,7 @@
 #include "driver/defaults.h"
 #include "driver/header.h"
 
-Header db_header_new_default(void) {
+Header header_default(void) {
     return (Header){
         .pages_count = DEFAULT_EMPTY_DB_ZERO_PAGES_COUNT,
         .first_table = NULL_ADDR,
@@ -33,11 +33,11 @@ HeaderResult header_read(int32_t fd) {
     HeaderResult res = {0};
 
     lseek(fd, 0, SEEK_SET);
-    int32_t readen = read(fd, header_buf, HEADER_SIZE);
+    int64_t readen = read(fd, header_buf, HEADER_SIZE);
 
     // Check header size.
     if (readen < HEADER_SIZE) {
-        res.status = HEADER_file_size_too_small;
+        res.status = HEADER_FILE_SIZE_TOO_SMALL;
         return res;
     }
 
@@ -48,7 +48,7 @@ HeaderResult header_read(int32_t fd) {
 
     // Validate readen magic.
     if (0 != strncmp(magic_buf, NEOSQL_MAGIC, 6)) {
-        res.status = HEADER_invalid_magic;
+        res.status = HEADER_INVALID_MAGIC;
         return res;
     }
 
@@ -60,7 +60,7 @@ HeaderResult header_read(int32_t fd) {
 
     // Validate storage type.
     if (header.storage_type > 1) {
-        res.status = HEADER_invalid_storage_type;
+        res.status = HEADER_INVALID_STORAGE_TYPE;
         return res;
     }
 
@@ -68,27 +68,22 @@ HeaderResult header_read(int32_t fd) {
     buf_reader_read(&reader, &(header.last_table), 6);
 
     res.header = header;
-    res.status = HEADER_ok;
+    res.status = HEADER_OK;
     return res;
 }
 
-HeaderResult header_write(Header header, int32_t fd) {
+void header_write(Header const *header, int32_t fd) {
     uint8_t header_buf[HEADER_SIZE] = {0};
     BufWriter writer = buf_writer_new(header_buf, HEADER_SIZE);
 
-    int8_t storage_type = header.storage_type;
+    int8_t storage_type = header->storage_type;
 
     buf_writer_write(&writer, NEOSQL_MAGIC, 6);
-    buf_writer_write(&writer, &(header.pages_count), 4);
+    buf_writer_write(&writer, &(header->pages_count), 4);
     buf_writer_write(&writer, &storage_type, 1);
-    buf_writer_write(&writer, &(header.first_table), 6);
-    buf_writer_write(&writer, &(header.last_table), 6);
+    buf_writer_write(&writer, &(header->first_table), 6);
+    buf_writer_write(&writer, &(header->last_table), 6);
 
     lseek(fd, 0, SEEK_SET);
     write(fd, buf_writer_get_buf(writer), HEADER_SIZE);
-
-    HeaderResult res = {0};
-    res.status = HEADER_ok;
-
-    return res;
 }

@@ -2,7 +2,7 @@
 
 #include "utils/buf_writer.h"
 
-BufWriter buf_writer_new(void *buf, int64_t buf_size) {
+BufWriter buf_writer_new(void *buf, uint64_t buf_size) {
     BufWriter writer = {
         .buf = buf,
         .buf_size = buf_size,
@@ -13,7 +13,7 @@ BufWriter buf_writer_new(void *buf, int64_t buf_size) {
 }
 
 BufWriterResult buf_writer_write(BufWriter *writer, const void *payload,
-                                 int64_t payload_size) {
+                                 uint64_t payload_size) {
     BufWriterResult res;
     if (payload_size == 0) {
         res.status = BUF_WRITER_ok;
@@ -30,7 +30,7 @@ BufWriterResult buf_writer_write(BufWriter *writer, const void *payload,
         return res;
     }
 
-    int64_t written = writer->buf_size - writer->buf_offset;
+    uint64_t written = writer->buf_size - writer->buf_offset;
     memcpy(writer->buf + writer->buf_offset, payload, written);
     writer->buf_offset += written;
 
