@@ -12,4 +12,4 @@ repos:
       name: tests
       entry: sh scripts/test.sh
       language: system
-      stage: push
+      stages: [push]
