@@ -6,6 +6,7 @@
 #include "criterion/criterion.h"
 #include "criterion/new/assert.h"
 
+#include "driver/addr.h"
 #include "driver/defaults.h"
 #include "driver/driver.h"
 #include "driver/list_block.h"
@@ -186,7 +187,7 @@ Test(TestDriver, test_driver_read_overflowed_block)
     cr_assert(block.header.is_overflow == false);
     cr_assert(eq(u64, block.header.payload_size, 10000));
     cr_assert(eq(u32, block.header.type, 0));
-    cr_assert_arr_eq(&block.header.next, &NULL_ADDR, sizeof NULL_ADDR);
+    cr_assert(addr_cmp(block.header.next, NULL_ADDR));
 
     list_block_free(&block);
 

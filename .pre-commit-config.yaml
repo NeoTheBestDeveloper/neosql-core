@@ -10,6 +10,6 @@ repos:
     hooks:
     - id: tests
       name: tests
-      entry: 'meson test neosql-core: -C build'
+      entry: sh scripts/test.sh
       language: system
-      stages: [commit,push]
+      stage: push
