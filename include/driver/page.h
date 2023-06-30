@@ -11,16 +11,16 @@
 #define PAGE_PAYLOAD_SIZE (DEFAULT_PAGE_SIZE - PAGE_HEADER_SIZE)
 
 typedef struct {
-    uint8_t *payload;
-    int16_t page_id;
+    uint8_t* payload;
+    int32_t page_id;
     int16_t free_space;
     int16_t first_free_byte; // Offset inside payload, not all page.
 } Page;
 
 // Create page with "DEFAULT_PAGE_SIZE" and fill payload with zeroes.
-Page page_new(int16_t page_id);
-void page_free(Page *);
+Page page_new(int32_t page_id);
+void page_free(Page*);
 
 // Some base io stuff for pages.
-Page page_read(int16_t page_id, int32_t fd);
-void page_write(Page const *, int32_t fd);
+Page page_read(int32_t page_id, int32_t fd);
+void page_write(Page const*, int32_t fd);

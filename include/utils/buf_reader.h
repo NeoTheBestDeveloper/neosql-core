@@ -4,7 +4,7 @@
 
 // This reader use stream reading.
 typedef struct {
-    const uint8_t *buf;
+    const uint8_t* buf;
     uint64_t buf_size;
     uint64_t buf_offset;
 } BufReader;
@@ -19,6 +19,6 @@ typedef struct {
     BufReaderResultStatus status;
 } BufReaderResult;
 
-BufReader buf_reader_new(void const *buf, uint64_t buf_size);
-BufReaderResult buf_reader_read(BufReader *reader, void *dst,
+BufReader buf_reader_new(void const* buf, uint64_t buf_size);
+BufReaderResult buf_reader_read(BufReader* reader, void* dst,
                                 uint64_t dst_size);

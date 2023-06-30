@@ -2,7 +2,8 @@
 
 #include "utils/buf_writer.h"
 
-BufWriter buf_writer_new(void *buf, uint64_t buf_size) {
+BufWriter buf_writer_new(void* buf, uint64_t buf_size)
+{
     BufWriter writer = {
         .buf = buf,
         .buf_size = buf_size,
@@ -12,8 +13,9 @@ BufWriter buf_writer_new(void *buf, uint64_t buf_size) {
     return writer;
 }
 
-BufWriterResult buf_writer_write(BufWriter *writer, const void *payload,
-                                 uint64_t payload_size) {
+BufWriterResult buf_writer_write(BufWriter* writer, const void* payload,
+                                 uint64_t payload_size)
+{
     BufWriterResult res;
     if (payload_size == 0) {
         res.status = BUF_WRITER_ok;
@@ -40,4 +42,4 @@ BufWriterResult buf_writer_write(BufWriter *writer, const void *payload,
     return res;
 }
 
-const uint8_t *buf_writer_get_buf(BufWriter writer) { return writer.buf; }
+const uint8_t* buf_writer_get_buf(BufWriter writer) { return writer.buf; }

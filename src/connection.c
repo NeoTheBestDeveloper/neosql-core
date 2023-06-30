@@ -8,17 +8,23 @@
 #include "driver/driver.h"
 #include "os.h"
 
-static bool is_file_exists(const char *path) { return 0 == access(path, F_OK); }
+static bool is_file_exists(const char* path)
+{
+    return 0 == access(path, F_OK);
+}
 
-static bool is_file_writable(const char *path) {
+static bool is_file_writable(const char* path)
+{
     return 0 == access(path, W_OK);
 }
 
-static bool is_file_readable(const char *path) {
+static bool is_file_readable(const char* path)
+{
     return 0 == access(path, R_OK);
 }
 
-static ConnectionResult _open_existen_db(char const *path) {
+static ConnectionResult _open_existen_db(char const* path)
+{
     ConnectionResult res = {
         .status = CONNECTION_OK,
     };
@@ -46,7 +52,8 @@ static ConnectionResult _open_existen_db(char const *path) {
     return res;
 }
 
-static ConnectionResult _open_noexisten_db(char const *path) {
+static ConnectionResult _open_noexisten_db(char const* path)
+{
     ConnectionResult res = {
         .status = CONNECTION_OK,
     };
@@ -68,7 +75,8 @@ static ConnectionResult _open_noexisten_db(char const *path) {
     return res;
 }
 
-ConnectionResult connection_open(char const *path) {
+ConnectionResult connection_open(char const* path)
+{
     ConnectionResult res = (is_file_exists(path)) ? _open_existen_db(path)
                                                   : _open_noexisten_db(path);
 
@@ -81,7 +89,8 @@ ConnectionResult connection_open(char const *path) {
     return res;
 }
 
-void connection_close(Connection *conn) {
+void connection_close(Connection* conn)
+{
     conn->is_active = false;
 
     close(conn->fd);

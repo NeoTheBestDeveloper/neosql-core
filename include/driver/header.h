@@ -16,7 +16,7 @@ typedef enum {
 typedef struct {
     Addr last_table;
     Addr first_table;
-    int32_t pages_count;
+    uint32_t pages_count;
     StorageType storage_type; // At file must be int8_t number.
 } Header;
 
@@ -37,4 +37,4 @@ Header header_default(void);
 Header header_new(StorageType storage_type);
 
 HeaderResult header_read(int32_t fd);
-void header_write(Header const *, int32_t fd);
+void header_write(Header const*, int32_t fd);

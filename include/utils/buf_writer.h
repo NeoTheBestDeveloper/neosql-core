@@ -4,7 +4,7 @@
 
 // This writer use stream writing.
 typedef struct {
-    uint8_t *buf;
+    uint8_t* buf;
     uint64_t buf_offset;
     uint64_t buf_size;
 } BufWriter;
@@ -19,9 +19,9 @@ typedef struct {
     BufWriterResultStatus status;
 } BufWriterResult;
 
-BufWriter buf_writer_new(void *buf, uint64_t buf_size);
+BufWriter buf_writer_new(void* buf, uint64_t buf_size);
 
-BufWriterResult buf_writer_write(BufWriter *writer, void const *payload,
+BufWriterResult buf_writer_write(BufWriter* writer, void const* payload,
                                  uint64_t payload_size);
 
-uint8_t const *buf_writer_get_buf(BufWriter writer);
+uint8_t const* buf_writer_get_buf(BufWriter writer);

@@ -41,6 +41,9 @@ warning_flags = [
 
 add_project_arguments(cc.get_supported_arguments(warning_flags), language: 'c')
 
+if get_option('buildtype') != 'release'
+  add_project_arguments(cc.get_supported_arguments('-DDEBUG=1'), language: 'c')
+endif
 
 incdir = include_directories('include')
 neosql_core = shared_library('neosql_core', 

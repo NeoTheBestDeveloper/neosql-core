@@ -4,7 +4,7 @@
 #include "page.h"
 
 // TODO: Realize cache for pages.
-// TODO: preallocate memory for cached pages (may be implement arena pattern).
+// TODO: use arena allocator for cached pages.
 
 typedef struct {
     Header header;
@@ -28,4 +28,4 @@ Driver driver_create_db(int32_t fd);
 // Trying to read header from already existing database.
 DriverResult driver_open_db(int32_t fd);
 
-void driver_free(Driver *);
+void driver_free(Driver*);

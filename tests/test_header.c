@@ -16,21 +16,22 @@ typedef enum {
     TEST_HEADER_READ_FAIL_INVALID_STORAGE_TYPE = 4,
 } TestId;
 
-char tmp_files[5][100 + 1] = {
-    "tmp_file_test_header_id_0.db", "tmp_file_test_header_id_1.db",
-    "tmp_file_test_header_id_2.db", "tmp_file_test_header_id_3.db",
-    "tmp_file_test_header_id_4.db"};
+char tmp_files[5][100 + 1]
+    = { "tmp_file_test_header_id_0.db", "tmp_file_test_header_id_1.db",
+        "tmp_file_test_header_id_2.db", "tmp_file_test_header_id_3.db",
+        "tmp_file_test_header_id_4.db" };
 
 void delete_tmp_file(TestId test_id) { unlink(tmp_files[test_id]); }
 
-void _create_valid_header(TestId test_id) {
+void _create_valid_header(TestId test_id)
+{
     int32_t fd = open(tmp_files[test_id], O_CREAT | O_WRONLY | O_BINARY, 0666);
 
     int32_t pages_count = 3;
     uint8_t storage_type = STORAGE_TYPE_LIST; // LIST
-    uint8_t reserved[HEADER_RESERVED_SIZE] = {0};
-    Addr first_table = (Addr){.page_id = 0, .offset = 50};
-    Addr last_table = (Addr){.page_id = 0, .offset = 500};
+    uint8_t reserved[HEADER_RESERVED_SIZE] = { 0 };
+    Addr first_table = (Addr) { .page_id = 0, .offset = 50 };
+    Addr last_table = (Addr) { .page_id = 0, .offset = 500 };
 
     write(fd, NEOSQL_MAGIC, 6);
     write(fd, &pages_count, 4);
@@ -44,7 +45,8 @@ void _create_valid_header(TestId test_id) {
 
 void create_valid_header(void) { _create_valid_header(TEST_HEADER_READ); }
 
-void create_invalid_magic_header(void) {
+void create_invalid_magic_header(void)
+{
     TestId test_id = TEST_HEADER_READ_FAIL_INVALID_MAGIC;
     _create_valid_header(test_id);
     int32_t fd = open(tmp_files[test_id], O_WRONLY | O_BINARY, 0666);
@@ -55,11 +57,12 @@ void create_invalid_magic_header(void) {
     close(fd);
 }
 
-void create_invalid_header_size(void) {
+void create_invalid_header_size(void)
+{
     int32_t test_id = TEST_HEADER_READ_FAIL_INVALID_HEADER_SIZE;
     int32_t fd = open(tmp_files[test_id], O_CREAT | O_RDWR | O_BINARY, 0666);
 
-    uint8_t reserved[20] = {0};
+    uint8_t reserved[20] = { 0 };
 
     write(fd, NEOSQL_MAGIC, 5);
     write(fd, reserved, 20);
@@ -67,7 +70,8 @@ void create_invalid_header_size(void) {
     close(fd);
 }
 
-void create_invalid_storage_type(void) {
+void create_invalid_storage_type(void)
+{
     TestId test_id = TEST_HEADER_READ_FAIL_INVALID_STORAGE_TYPE;
     _create_valid_header(test_id);
 
@@ -80,7 +84,8 @@ void create_invalid_storage_type(void) {
     close(fd);
 }
 
-Test(TestHeader, test_header_read, .init = create_valid_header) {
+Test(TestHeader, test_header_read, .init = create_valid_header)
+{
     int32_t test_id = TEST_HEADER_READ;
     int32_t fd = open(tmp_files[test_id], O_RDONLY | O_BINARY, 0666);
     HeaderResult res = header_read(fd);
@@ -91,15 +96,16 @@ Test(TestHeader, test_header_read, .init = create_valid_header) {
 
     cr_assert(eq(i32, header.pages_count, 3));
     cr_assert(eq(u32, header.storage_type, STORAGE_TYPE_LIST));
-    cr_assert(addr_cmp(header.first_table, (Addr){0, 50}));
-    cr_assert(addr_cmp(header.last_table, (Addr){0, 500}));
+    cr_assert(addr_cmp(header.first_table, (Addr) { 0, 50 }));
+    cr_assert(addr_cmp(header.last_table, (Addr) { 0, 500 }));
 
     close(fd);
     delete_tmp_file(test_id);
 }
 
 Test(TestHeader, test_header_read_fail_invalid_magic,
-     .init = create_invalid_magic_header) {
+     .init = create_invalid_magic_header)
+{
     TestId test_id = TEST_HEADER_READ_FAIL_INVALID_MAGIC;
     int32_t fd = open(tmp_files[test_id], O_RDONLY | O_BINARY);
 
@@ -111,7 +117,8 @@ Test(TestHeader, test_header_read_fail_invalid_magic,
 }
 
 Test(TestHeader, test_header_read_fail_invalid_header_size,
-     .init = create_invalid_header_size) {
+     .init = create_invalid_header_size)
+{
     TestId test_id = TEST_HEADER_READ_FAIL_INVALID_HEADER_SIZE;
     int32_t fd = open(tmp_files[test_id], O_RDONLY | O_BINARY);
 
@@ -123,7 +130,8 @@ Test(TestHeader, test_header_read_fail_invalid_header_size,
 }
 
 Test(TestHeader, test_header_read_fail_invalid_storage_type,
-     .init = create_invalid_storage_type) {
+     .init = create_invalid_storage_type)
+{
     TestId test_id = TEST_HEADER_READ_FAIL_INVALID_STORAGE_TYPE;
     int32_t fd = open(tmp_files[test_id], O_RDONLY | O_BINARY);
 
@@ -134,11 +142,12 @@ Test(TestHeader, test_header_read_fail_invalid_storage_type,
     delete_tmp_file(test_id);
 }
 
-Test(TestHeader, test_header_write) {
+Test(TestHeader, test_header_write)
+{
     int32_t pages_count = 3;
     StorageType storage_type = STORAGE_TYPE_LIST;
-    Addr first_table = (Addr){.page_id = 0, .offset = 60};
-    Addr last_table = (Addr){.page_id = 0, .offset = 600};
+    Addr first_table = (Addr) { .page_id = 0, .offset = 60 };
+    Addr last_table = (Addr) { .page_id = 0, .offset = 600 };
 
     Header header = {
         .pages_count = pages_count,
@@ -153,7 +162,7 @@ Test(TestHeader, test_header_write) {
 
     lseek(fd, 0, SEEK_SET);
 
-    char magic_buf[7] = {0};
+    char magic_buf[7] = { 0 };
     read(fd, magic_buf, 6);
     cr_assert(eq(str, magic_buf, NEOSQL_MAGIC));
 

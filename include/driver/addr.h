@@ -3,11 +3,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define NULL_ADDR ((Addr){.page_id = 0, .offset = 0})
+#define NULL_ADDR ((Addr) { .page_id = 0, .offset = 0 })
 
 typedef struct {
     int32_t page_id; // Starts from zero.
-    int16_t offset;  // Offset inside page payload, not inside all page.
+    int16_t offset; // Offset inside page payload, not inside all page.
 } Addr;
 
 // Calculate absolute addres offset from file start.

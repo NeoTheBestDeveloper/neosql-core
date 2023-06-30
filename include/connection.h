@@ -3,7 +3,7 @@
 #include "driver/driver.h"
 
 typedef struct {
-    char *path;
+    char* path;
     int32_t fd;
     Driver driver;
     bool is_active;
@@ -21,5 +21,5 @@ typedef struct {
     ConnectionResultStatus status;
 } ConnectionResult;
 
-ConnectionResult connection_open(char const *path);
-void connection_close(Connection *);
+ConnectionResult connection_open(char const* path);
+void connection_close(Connection*);

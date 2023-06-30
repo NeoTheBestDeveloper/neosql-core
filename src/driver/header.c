@@ -7,8 +7,9 @@
 #include "driver/defaults.h"
 #include "driver/header.h"
 
-Header header_default(void) {
-    return (Header){
+Header header_default(void)
+{
+    return (Header) {
         .pages_count = DEFAULT_EMPTY_DB_ZERO_PAGES_COUNT,
         .first_table = NULL_ADDR,
         .last_table = NULL_ADDR,
@@ -16,8 +17,9 @@ Header header_default(void) {
     };
 }
 
-Header header_new(StorageType storage_type) {
-    return (Header){
+Header header_new(StorageType storage_type)
+{
+    return (Header) {
         .pages_count = DEFAULT_EMPTY_DB_ZERO_PAGES_COUNT,
         .first_table = NULL_ADDR,
         .last_table = NULL_ADDR,
@@ -25,12 +27,13 @@ Header header_new(StorageType storage_type) {
     };
 }
 
-HeaderResult header_read(int32_t fd) {
-    uint8_t header_buf[HEADER_SIZE] = {0};
-    char magic_buf[7] = {0};
+HeaderResult header_read(int32_t fd)
+{
+    uint8_t header_buf[HEADER_SIZE] = { 0 };
+    char magic_buf[7] = { 0 };
 
-    Header header = {0};
-    HeaderResult res = {0};
+    Header header = { 0 };
+    HeaderResult res = { 0 };
 
     lseek(fd, 0, SEEK_SET);
     int64_t readen = read(fd, header_buf, HEADER_SIZE);
@@ -72,8 +75,9 @@ HeaderResult header_read(int32_t fd) {
     return res;
 }
 
-void header_write(Header const *header, int32_t fd) {
-    uint8_t header_buf[HEADER_SIZE] = {0};
+void header_write(Header const* header, int32_t fd)
+{
+    uint8_t header_buf[HEADER_SIZE] = { 0 };
     BufWriter writer = buf_writer_new(header_buf, HEADER_SIZE);
 
     int8_t storage_type = header->storage_type;
