@@ -237,7 +237,7 @@ Test(TestDriver, test_driver_write_block_at_exists_page)
     lseek(fd, 100 + PAGE_HEADER_SIZE, SEEK_SET);
 
     bool is_overflow_buf;
-    ListBlockType block_type_buf;
+    uint8_t block_type_buf;
     Addr next_buf;
     uint64_t payload_size_buf;
     uint8_t payload_buf[18];
