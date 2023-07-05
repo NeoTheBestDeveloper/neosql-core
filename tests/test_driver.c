@@ -14,7 +14,7 @@
 #include "utils/buf_reader.h"
 
 // Static functions from driver.h
-ListBlock _driver_read_list_block(Driver* const driver, Addr addr);
+ListBlock driver_read_list_block(Driver* const driver, Addr addr);
 
 typedef enum {
     TEST_DRIVER_DB_CREATING = 0,
@@ -146,14 +146,14 @@ Test(TestDriver, test_driver_read_block)
                       O_CREAT | O_BINARY | O_RDWR, 0666);
     DriverResult res = driver_open_db(fd);
 
-    ListBlock block = _driver_read_list_block(&(res.driver), NULL_ADDR);
+    ListBlock block = driver_read_list_block(&(res.driver), NULL_ADDR);
     cr_assert_arr_eq(block.payload, "Hi there!", block.header.payload_size);
     cr_assert(block.header.is_overflow == false);
     cr_assert(eq(u64, block.header.payload_size, 10));
     cr_assert(eq(u32, block.header.type, 0));
     cr_assert_arr_eq(&block.header.next, &NULL_ADDR, sizeof NULL_ADDR);
 
-    ListBlock block2 = _driver_read_list_block(
+    ListBlock block2 = driver_read_list_block(
         &(res.driver), (Addr) { .page_id = 1, .offset = 0 });
     cr_assert_arr_eq(block2.payload,
                      "Hi abuses, I'm kind of sort of your king!",
@@ -176,7 +176,7 @@ Test(TestDriver, test_driver_read_overflowed_block)
                       O_CREAT | O_BINARY | O_RDWR, 0666);
     DriverResult res = driver_open_db(fd);
 
-    ListBlock block = _driver_read_list_block(
+    ListBlock block = driver_read_list_block(
         &(res.driver), (Addr) { .page_id = 0, .offset = 26 });
 
     for (uint64_t i = 0; i < 10000; ++i) {
