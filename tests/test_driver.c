@@ -1,5 +1,6 @@
 #include <fcntl.h>
-#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "criterion/assert.h"
@@ -10,22 +11,29 @@
 #include "driver/defaults.h"
 #include "driver/driver.h"
 #include "driver/list_block.h"
+#include "driver/page.h"
 #include "os.h"
 #include "utils/buf_reader.h"
 
 // Static functions from driver.h
 ListBlock driver_read_list_block(Driver* const driver, Addr addr);
+void driver_write_list_block(const Driver* driver, const ListBlock* block,
+                             Addr addr);
+void driver_append_page(Driver* driver, const Page*);
 
 typedef enum {
-    TEST_DRIVER_DB_CREATING = 0,
-    TEST_DRIVER_DB_OPENING = 1,
-    TEST_DRIVER_DB_OPENING_IVALID_DATA = 2,
+    TEST_DRIVER_CREATING = 0,
+    TEST_DRIVER_OPENING = 1,
+    TEST_DRIVER_OPENING_IVALID_DATA = 2,
+    TEST_DRIVER_WRITE_BLOCK_AT_EXISTS_PAGE = 3,
+    TEST_DRIVER_WRITE_BLOCK_AT_EXISTS_PAGES = 4,
+    TEST_DRIVER_APPEND_PAGE = 5,
 } TestId;
 
-char tmp_files[3][100] = {
-    "test_tmp_file_test_driver_0.db",
-    "test_tmp_file_test_driver_1.db",
-    "test_tmp_file_test_driver_2.db",
+char tmp_files[][100] = {
+    "test_tmp_file_test_driver_0.db", "test_tmp_file_test_driver_1.db",
+    "test_tmp_file_test_driver_2.db", "test_tmp_file_test_driver_3.db",
+    "test_tmp_file_test_driver_4.db", "test_tmp_file_test_driver_5.db",
 };
 
 uint8_t header_reserved_mock[HEADER_RESERVED_SIZE] = { 0 };
@@ -35,9 +43,9 @@ uint8_t big_payload[10000] = { 0 };
 
 static void delete_tmp_file(TestId test_id) { unlink(tmp_files[test_id]); }
 
-Test(TestDriver, test_driver_db_create)
+Test(TestDriver, test_driver_create)
 {
-    TestId test_id = TEST_DRIVER_DB_CREATING;
+    TestId test_id = TEST_DRIVER_CREATING;
     int32_t fd = open(tmp_files[test_id], O_CREAT | O_BINARY | O_RDWR, 0666);
 
     Driver driver = driver_create_db(fd);
@@ -91,9 +99,9 @@ Test(TestDriver, test_driver_db_create)
     close(fd);
 }
 
-Test(TestDriver, test_driver_db_open)
+Test(TestDriver, test_driver_open)
 {
-    TestId test_id = TEST_DRIVER_DB_OPENING;
+    TestId test_id = TEST_DRIVER_OPENING;
     int32_t fd = open(tmp_files[test_id], O_CREAT | O_BINARY | O_RDWR, 0666);
 
     uint32_t page_count = 4;
@@ -125,9 +133,9 @@ Test(TestDriver, test_driver_db_open)
     delete_tmp_file(test_id);
 }
 
-Test(TestDriver, test_driver_db_invalid_data)
+Test(TestDriver, test_driver_invalid_data)
 {
-    TestId test_id = TEST_DRIVER_DB_OPENING_IVALID_DATA;
+    TestId test_id = TEST_DRIVER_OPENING_IVALID_DATA;
     int32_t fd = open(tmp_files[test_id], O_CREAT | O_BINARY | O_RDWR, 0666);
 
     DriverResult res = driver_open_db(fd);
@@ -193,4 +201,140 @@ Test(TestDriver, test_driver_read_overflowed_block)
 
     driver_free(&res.driver);
     close(fd);
+}
+
+Test(TestDriver, test_driver_write_block_at_exists_page)
+{
+    TestId test_id = TEST_DRIVER_WRITE_BLOCK_AT_EXISTS_PAGE;
+    int32_t fd = open(tmp_files[test_id], O_CREAT | O_BINARY | O_RDWR, 0666);
+
+    Driver driver = driver_create_db(fd);
+
+    ListBlock block = {
+        .header = {
+            .is_overflow = false, 
+            .next = (Addr){.offset = 100, .page_id = 0}, 
+            .payload_size = 18, 
+            .type = LIST_BLOCK_TYPE_RECORD,
+        }, 
+        .payload = malloc(18),
+    };
+    memcpy(block.payload, "HI GUYS I AM PIVO!", block.header.payload_size);
+
+    driver_write_list_block(&driver, &block,
+                            (Addr) { .offset = 0, .page_id = 0 });
+
+    lseek(fd, 100, SEEK_SET);
+    int16_t free_space_buf, first_free_byte_buf;
+    read(fd, &free_space_buf, 2);
+    read(fd, &first_free_byte_buf, 2);
+
+    cr_assert(
+        eq(i16, first_free_byte_buf, (int16_t)block.header.payload_size));
+    cr_assert(eq(i16, free_space_buf,
+                 (int16_t)(PAGE_PAYLOAD_SIZE - block.header.payload_size)));
+
+    lseek(fd, 100 + PAGE_HEADER_SIZE, SEEK_SET);
+
+    bool is_overflow_buf;
+    ListBlockType block_type_buf;
+    Addr next_buf;
+    uint64_t payload_size_buf;
+    uint8_t payload_buf[18];
+
+    read(fd, &block_type_buf, 1);
+    read(fd, &is_overflow_buf, 1);
+    read(fd, &next_buf, 6);
+    read(fd, &payload_size_buf, 8);
+    read(fd, payload_buf, 18);
+
+    cr_assert(eq(u32, block_type_buf, block.header.type));
+    cr_assert(eq(u8, is_overflow_buf, block.header.is_overflow));
+    cr_assert_arr_eq(&next_buf, &block.header.next, 6);
+    cr_assert(eq(u64, payload_size_buf, block.header.payload_size));
+    cr_assert_arr_eq(payload_buf, block.payload, 18);
+
+    list_block_free(&block);
+    driver_free(&driver);
+    close(fd);
+
+    delete_tmp_file(test_id);
+}
+
+Test(TestDriver, test_driver_write_block_at_exists_pages)
+{
+    TestId test_id = TEST_DRIVER_WRITE_BLOCK_AT_EXISTS_PAGES;
+    int32_t fd = open(tmp_files[test_id], O_CREAT | O_BINARY | O_RDWR, 0666);
+
+    Driver driver = driver_create_db(fd);
+
+    lseek(fd, 100, SEEK_SET);
+    write(fd, &(int16_t) { 10 }, 2);
+    write(fd, &(int16_t) { PAGE_PAYLOAD_SIZE - 10 }, 2);
+
+    ListBlock block = {
+        .header = {
+            .is_overflow = false,
+            .next = (Addr){.offset = 100, .page_id = 0},
+            .payload_size = 18,
+            .type = LIST_BLOCK_TYPE_RECORD,
+        },
+        .payload = malloc(18),
+    };
+    memcpy(block.payload, "HI GUYS I AM PIVO!", block.header.payload_size);
+
+    driver_write_list_block(&driver, &block,
+                            (Addr) { .offset = 0, .page_id = 0 });
+
+    cr_assert(eq(i32, driver.header.pages_count, 2));
+
+    lseek(fd, 100 + DEFAULT_PAGE_SIZE, SEEK_SET);
+    int16_t free_space_buf, first_free_byte_buf;
+    read(fd, &free_space_buf, 2);
+    read(fd, &first_free_byte_buf, 2);
+
+    cr_assert(
+        eq(i16, first_free_byte_buf, (int16_t)block.header.payload_size));
+    cr_assert(eq(i16, free_space_buf,
+                 (int16_t)(PAGE_PAYLOAD_SIZE - block.header.payload_size)));
+
+    list_block_free(&block);
+    driver_free(&driver);
+    close(fd);
+
+    delete_tmp_file(test_id);
+}
+
+Test(TestDriver, test_driver_append_page)
+{
+    TestId test_id = TEST_DRIVER_WRITE_BLOCK_AT_EXISTS_PAGES;
+    int32_t fd = open(tmp_files[test_id], O_CREAT | O_BINARY | O_RDWR, 0666);
+
+    Driver driver = driver_create_db(fd);
+    Page page1 = page_new(1);
+    Page page2 = page_new(2);
+
+    driver_append_page(&driver, &page1);
+    driver_append_page(&driver, &page2);
+
+    cr_assert(eq(i32, driver.header.pages_count, 3));
+
+    int32_t pages_count_buf;
+
+    lseek(fd, 6, SEEK_SET);
+    read(fd, &pages_count_buf, 4);
+    cr_assert(eq(i32, pages_count_buf, 3));
+
+    lseek(fd, 0, SEEK_SET);
+    uint8_t buf[HEADER_SIZE + DEFAULT_PAGE_SIZE * 3];
+
+    int64_t readen = read(fd, buf, HEADER_SIZE + DEFAULT_PAGE_SIZE * 3);
+    cr_assert(eq(i64, readen, HEADER_SIZE + DEFAULT_PAGE_SIZE * 3));
+
+    page_free(&page1);
+    page_free(&page2);
+
+    driver_free(&driver);
+    close(fd);
+    delete_tmp_file(test_id);
 }

@@ -42,7 +42,7 @@ Page page_read(int32_t page_id, int32_t fd)
     return page;
 }
 
-void page_write(Page const* page, int32_t fd)
+void page_write(const Page* page, int32_t fd)
 {
     int64_t offset = calc_page_payload_offset(page->page_id);
 
@@ -54,8 +54,7 @@ void page_write(Page const* page, int32_t fd)
 
     lseek(fd, offset, SEEK_SET);
 
-    uint8_t const* header = buf_writer_get_buf(header_writer);
-
+    const uint8_t* header = buf_writer_get_buf(header_writer);
     write(fd, header, PAGE_HEADER_SIZE);
     write(fd, page->payload, PAGE_PAYLOAD_SIZE);
 }

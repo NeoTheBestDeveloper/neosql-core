@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -11,6 +10,14 @@
 
 #include "pseudo_static.h" // For testing static functions.
 #include "utils/buf_writer.h"
+
+static void driver_append_page(Driver* driver, const Page* page)
+{
+    driver->header.pages_count += 1;
+    header_write(&driver->header, driver->fd);
+
+    page_write(page, driver->fd);
+}
 
 static ListBlockHeader read_list_block_header(Page const* page, int16_t offset)
 {
@@ -84,7 +91,7 @@ static ListBlock driver_block_from_parts(const ListBlock* parts,
 
 // TODO: Optimize memory usage. Not neccery new allocation for new page. Read
 // pages from cache.
-static ListBlock driver_read_list_block(Driver* const driver, Addr addr)
+static ListBlock driver_read_list_block(const Driver* driver, Addr addr)
 {
     ListBlock* parts = malloc(sizeof *parts);
     uint64_t parts_readen = 0;
@@ -95,7 +102,7 @@ static ListBlock driver_read_list_block(Driver* const driver, Addr addr)
 
         ListBlock part = driver_read_block_part(&curr_page, addr);
 
-        // Save readen block.
+        // Save readen part.
         parts[parts_readen] = part;
         parts_readen += 1;
 
@@ -119,6 +126,92 @@ static ListBlock driver_read_list_block(Driver* const driver, Addr addr)
     free(parts);
 
     return block;
+}
+
+static void driver_write_block_part(const ListBlock* block, Page* page,
+                                    int16_t page_offset,
+                                    uint64_t part_payload_size)
+{
+    BufWriter writer
+        = buf_writer_new(page->payload + page_offset,
+                         LIST_BLOCK_HEADER_SIZE + part_payload_size);
+
+    buf_writer_write(&writer, &block->header.type, 1);
+    buf_writer_write(&writer, &block->header.is_overflow, 1);
+    buf_writer_write(&writer, &block->header.next, 6);
+    buf_writer_write(&writer, &block->header.payload_size, 8);
+    buf_writer_write(&writer, block->payload, part_payload_size);
+
+    page->free_space -= part_payload_size;
+    page->first_free_byte += part_payload_size;
+}
+
+// Write block into page without partitioning.
+static bool driver_try_write_at_exists_page(const Driver* driver,
+                                            const ListBlock* block, Addr addr)
+{
+    bool block_written = false;
+    for (int32_t i = 0; i < driver->header.pages_count && !block_written;
+         ++i) {
+        Page page = page_read(i, driver->fd);
+
+        if (page.free_space
+            >= block->header.payload_size + LIST_BLOCK_HEADER_SIZE) {
+            driver_write_block_part(block, &page, addr.offset,
+                                    block->header.payload_size);
+            page_write(&page, driver->fd);
+            block_written = true;
+        }
+
+        page_free(&page);
+    }
+
+    return block_written;
+}
+
+// TODO: Write to cache
+static void driver_write_list_block(Driver* driver, const ListBlock* block,
+                                    Addr addr)
+{
+    if (driver_try_write_at_exists_page(driver, block, addr)) {
+        return;
+    }
+
+    int64_t payload_written = 0;
+    int64_t left_to_write = block->header.payload_size - payload_written;
+
+    Page* pages = malloc(sizeof *pages);
+    uint64_t pages_written = 0;
+    pages[0] = page_new(driver->header.pages_count);
+
+    while (true) {
+        int64_t can_write = 0;
+
+        if (left_to_write >= pages[pages_written].free_space) {
+            can_write = pages[pages_written].free_space;
+        }
+        else {
+            can_write = left_to_write;
+        }
+
+        driver_write_block_part(block, pages + pages_written, 0, can_write);
+
+        left_to_write -= can_write;
+
+        pages_written += 1;
+
+        if (left_to_write == 0) {
+            break;
+        }
+
+        pages = realloc(pages, pages_written + sizeof *pages);
+    }
+
+    for (uint64_t i = 0; i < pages_written; ++i) {
+        driver_append_page(driver, pages + i);
+        page_free(pages + i);
+    }
+    free(pages);
 }
 
 DriverResult driver_open_db(int32_t fd)
