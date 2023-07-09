@@ -5,11 +5,3 @@ repos:
     hooks:
       - id: commitizen
         stages: [commit-msg]
-
-  - repo: local
-    hooks:
-    - id: tests
-      name: tests
-      entry: sh scripts/test.sh
-      language: system
-      stages: [push]
