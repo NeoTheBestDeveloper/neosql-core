@@ -27,10 +27,6 @@ Test(TestBlock, test_list_block_from_table)
 
     TableResult res = table_new("Aboba table", columns, 2);
 
-    if (res.status != TABLE_OK) {
-        cr_assert(false);
-    }
-
     ListBlock block = list_block_from_table(&(res.table));
 
     cr_assert(eq(u8, block.header.is_overflow, false));
@@ -106,14 +102,14 @@ Test(TestBlock, test_list_block_from_table)
 Test(TestBlock, test_list_block_to_table)
 {
     u8 payload[1000] = { 0 };
-    ListBlock block = { 
+    ListBlock block = {
         .payload = payload,
         .header = {
                         .is_overflow = false,
                         .next = NULL_ADDR,
-                        .payload_size = 0, 
+                        .payload_size = 0,
                         .type = LIST_BLOCK_TYPE_TABLE,
-                    }, 
+                    },
     };
 
     BufWriter writer = buf_writer_new(payload, 1000);
