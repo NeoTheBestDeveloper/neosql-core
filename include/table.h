@@ -1,6 +1,7 @@
 #pragma once
 
 #include "driver/addr.h"
+#include "driver/list_block.h"
 
 #define DATATYPE_SIZE(_d_)                                                    \
     (1llu + ((_d_.id == CHAR || _d_.id == VARCHAR) ? 2llu : 0llu))
@@ -62,3 +63,7 @@ void serialized_table_free(SerializedTable*);
 
 Table table_deserialize(const u8* bytes, u64 size);
 SerializedTable table_serialize(const Table*);
+
+u64 table_serialized_size(const Table* t);
+ListBlock list_block_from_table(const Table*);
+Table list_block_to_table(const ListBlock*);

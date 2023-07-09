@@ -2,7 +2,7 @@
 
 #include "utils/types.h"
 
-#define NULL_ADDR ((Addr) { .page_id = 0, .offset = 0 })
+#define NULL_ADDR ((Addr) { .page_id = -1, .offset = -1 })
 
 typedef struct {
     i32 page_id; // Starts from zero.

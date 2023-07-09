@@ -1,5 +1,6 @@
 #include <fcntl.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "criterion/assert.h"
@@ -11,13 +12,13 @@
 #include "driver/driver.h"
 #include "driver/list_block.h"
 #include "driver/page.h"
+#include "table.h"
 #include "utils/buf_reader.h"
 #include "utils/os.h"
 
 // Static functions from driver.h
 ListBlock driver_read_list_block(Driver* const driver, Addr addr);
-void driver_write_list_block(const Driver* driver, const ListBlock* block,
-                             Addr addr);
+Addr driver_append_list_block(Driver* driver, const ListBlock* block);
 void driver_append_page(Driver* driver, const Page*);
 
 typedef enum {
@@ -27,12 +28,14 @@ typedef enum {
     TEST_DRIVER_WRITE_BLOCK_AT_EXISTS_PAGE = 3,
     TEST_DRIVER_WRITE_BLOCK_AT_EXISTS_PAGES = 4,
     TEST_DRIVER_APPEND_PAGE = 5,
+    TEST_DRIVER_APPEND_TABLE = 6,
 } TestId;
 
 char tmp_files[][100] = {
     "test_tmp_file_test_driver_0.db", "test_tmp_file_test_driver_1.db",
     "test_tmp_file_test_driver_2.db", "test_tmp_file_test_driver_3.db",
     "test_tmp_file_test_driver_4.db", "test_tmp_file_test_driver_5.db",
+    "test_tmp_file_test_driver_6.db",
 };
 
 uint8_t header_reserved_mock[HEADER_RESERVED_SIZE] = { 0 };
@@ -41,6 +44,33 @@ uint8_t page_payload_mock[PAGE_PAYLOAD_SIZE] = { 0 };
 uint8_t big_payload[10000] = { 0 };
 
 static void delete_tmp_file(TestId test_id) { unlink(tmp_files[test_id]); }
+
+static bool table_cmp(const Table* t1, const Table* t2)
+{
+    bool same = true;
+
+    same = same && t1->records_count == t2->records_count;
+    same = same && t1->columns_count == t2->columns_count;
+
+    if (!same) {
+        return false;
+    }
+
+    same = same && 0 == strcmp(t1->name, t2->name);
+    same = same && addr_cmp(t1->first_record, t2->first_record);
+    same = same && addr_cmp(t1->last_record, t2->last_record);
+
+    for (u8 i = 0; i < t1->columns_count; ++i) {
+        same = same && t1->columns[i].type.id == t2->columns[i].type.id;
+        same = same
+            && t1->columns[i].type.max_size == t2->columns[i].type.max_size;
+        same = same
+            && t1->columns[i].type.nullable == t2->columns[i].type.nullable;
+        same = same && 0 == strcmp(t1->columns[i].name, t2->columns[i].name);
+    }
+
+    return same;
+}
 
 Test(TestDriver, test_driver_create)
 {
@@ -153,12 +183,13 @@ Test(TestDriver, test_driver_read_block)
                       O_CREAT | O_BINARY | O_RDWR, 0666);
     DriverResult res = driver_open_db(fd);
 
-    ListBlock block = driver_read_list_block(&(res.driver), NULL_ADDR);
+    Addr zero_addr = { 0, 0 };
+    ListBlock block = driver_read_list_block(&(res.driver), zero_addr);
     cr_assert_arr_eq(block.payload, "Hi there!", block.header.payload_size);
     cr_assert(block.header.is_overflow == false);
     cr_assert(eq(u64, block.header.payload_size, 10));
     cr_assert(eq(u32, block.header.type, 0));
-    cr_assert_arr_eq(&block.header.next, &NULL_ADDR, sizeof NULL_ADDR);
+    cr_assert_arr_eq(&block.header.next, &NULL_ADDR, 6);
 
     ListBlock block2 = driver_read_list_block(
         &(res.driver), (Addr) { .page_id = 1, .offset = 0 });
@@ -168,7 +199,7 @@ Test(TestDriver, test_driver_read_block)
     cr_assert(block2.header.is_overflow == false);
     cr_assert(eq(u64, block2.header.payload_size, 42));
     cr_assert(eq(u32, block2.header.type, 0));
-    cr_assert_arr_eq(&block2.header.next, &NULL_ADDR, sizeof NULL_ADDR);
+    cr_assert_arr_eq(&block2.header.next, &NULL_ADDR, 6);
 
     list_block_free(&block);
     list_block_free(&block2);
@@ -220,8 +251,7 @@ Test(TestDriver, test_driver_write_block_at_exists_page)
     };
     memcpy(block.payload, "HI GUYS I AM PIVO!", block.header.payload_size);
 
-    driver_write_list_block(&driver, &block,
-                            (Addr) { .offset = 0, .page_id = 0 });
+    driver_append_list_block(&driver, &block);
 
     lseek(fd, 100, SEEK_SET);
     int16_t free_space_buf, first_free_byte_buf;
@@ -282,8 +312,7 @@ Test(TestDriver, test_driver_write_block_at_exists_pages)
     };
     memcpy(block.payload, "HI GUYS I AM PIVO!", block.header.payload_size);
 
-    driver_write_list_block(&driver, &block,
-                            (Addr) { .offset = 0, .page_id = 0 });
+    driver_append_list_block(&driver, &block);
 
     cr_assert(eq(i32, driver.header.pages_count, 2));
 
@@ -332,6 +361,63 @@ Test(TestDriver, test_driver_append_page)
 
     page_free(&page1);
     page_free(&page2);
+
+    driver_free(&driver);
+    close(fd);
+    delete_tmp_file(test_id);
+}
+
+// void driver_append_table(Driver*, const Table*);
+Test(TestDriver, test_driver_append_table)
+{
+    TestId test_id = TEST_DRIVER_WRITE_BLOCK_AT_EXISTS_PAGES;
+    int32_t fd = open(tmp_files[test_id], O_CREAT | O_BINARY | O_RDWR, 0666);
+
+    Driver driver = driver_create_db(fd);
+
+    Column columns1[]
+        = { { .name = "c1",
+              { .id = TIMESTAMP, .nullable = false, .max_size = 0 } } };
+
+    Column columns2[] = {
+        {
+            .name = "c1",
+            { .id = TIMESTAMP, .nullable = false, .max_size = 0 },
+        },
+        {
+            .name = "c2",
+            { .id = VARCHAR, .nullable = false, .max_size = 1024 },
+        },
+    };
+
+    Table t1 = table_new("Table 1", columns1, 1).table;
+    Table t2 = table_new("Table 2", columns2, 1).table;
+    Table t3 = table_new("Table 3", columns1, 1).table;
+
+    driver_append_table(&driver, &t1);
+    cr_assert(addr_cmp(driver.header.first_table, driver.header.last_table));
+    ListBlock block1
+        = driver_read_list_block(&driver, driver.header.first_table);
+    Table t1_copy = list_block_to_table(&block1);
+    cr_assert(table_cmp(&t1_copy, &t1));
+
+    driver_append_table(&driver, &t2);
+    ListBlock block2
+        = driver_read_list_block(&driver, driver.header.last_table);
+    Table t2_copy = list_block_to_table(&block2);
+    cr_assert(table_cmp(&t2_copy, &t2));
+
+    driver_append_table(&driver, &t3);
+    ListBlock block3
+        = driver_read_list_block(&driver, driver.header.last_table);
+    Table t3_copy = list_block_to_table(&block3);
+    cr_assert(table_cmp(&t3_copy, &t3));
+
+    table_free(&t1);
+    table_free(&t1_copy);
+    table_free(&t2);
+    table_free(&t2_copy);
+    table_free(&t3);
 
     driver_free(&driver);
     close(fd);

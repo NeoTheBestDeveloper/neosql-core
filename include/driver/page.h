@@ -22,4 +22,9 @@ void page_free(Page*);
 
 // Some base io stuff for pages.
 Page page_read(i32 page_id, i32 fd);
-void page_write(Page const*, i32 fd);
+void page_write(const Page*, i32 fd);
+
+void page_append_block_part(Page*, const ListBlock*, u64 part_size,
+                            u64 part_offset);
+void page_append_block(Page*, const ListBlock*);
+bool page_can_append_block(const Page*, const ListBlock*);

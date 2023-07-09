@@ -2,6 +2,7 @@
 
 #include "header.h"
 #include "page.h"
+#include "table.h"
 
 // TODO: Realize cache for pages.
 // TODO: use arena allocator for cached pages.
@@ -30,7 +31,7 @@ DriverResult driver_open_db(i32 fd);
 
 void driver_free(Driver*);
 
-// driver_append_table();
+void driver_append_table(Driver*, const Table*);
 // driver_find_table();
 // driver_delete_table();
 // driver_update_table();

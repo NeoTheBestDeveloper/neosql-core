@@ -16,13 +16,14 @@
 
 uint8_t page_zeroes[PAGE_PAYLOAD_SIZE] = { 0 };
 uint8_t reserved_page[PAGE_HEADER_RESERVED_SIZE] = { 0 };
-uint8_t null_addr[6] = { 0 };
 uint8_t big_payload[10000] = { 0 };
 
 typedef struct {
     int32_t page_id; // Starts from zero.
     int16_t offset; // Offset inside page payload, not inside all page.
 } Addr;
+
+Addr null_addr = { -1, -1 };
 
 void write_header(int32_t fd)
 {
@@ -32,8 +33,8 @@ void write_header(int32_t fd)
     write(fd, "NEOSQL", 6);
     write(fd, &pages_count, 4);
     write(fd, &storage_type, 1);
-    write(fd, null_addr, 6);
-    write(fd, null_addr, 6);
+    write(fd, &null_addr, 6);
+    write(fd, &null_addr, 6);
 
     uint8_t reserved[77] = { 0 };
     write(fd, reserved, 77);
@@ -78,7 +79,7 @@ int main(int argc, char* argv[])
 
     write(fd, &block_type, 1);
     write(fd, &is_owerflow, 1);
-    write(fd, null_addr, sizeof null_addr);
+    write(fd, &null_addr, 6);
     write(fd, &first_block_payload_size, 8);
     write(fd, first_payload, (sizeof first_payload));
 
@@ -91,7 +92,7 @@ int main(int argc, char* argv[])
 
     write(fd, &block_type, 1);
     write(fd, &is_owerflow, 1);
-    write(fd, null_addr, sizeof null_addr);
+    write(fd, &null_addr, 6);
     write(fd, &second_block_payload_size, 8);
     write(fd, second_payload, (sizeof second_payload));
 
@@ -136,7 +137,7 @@ int main(int argc, char* argv[])
     is_owerflow = 0;
     write(fd, &block_type, 1);
     write(fd, &is_owerflow, 1);
-    write(fd, &(Addr) { .page_id = 0, .offset = 0 }, 6);
+    write(fd, &null_addr, 6);
     write(fd, &third_payload_size, 8);
     write(fd, big_payload + first_payload_size + second_payload_size,
           third_payload_size);

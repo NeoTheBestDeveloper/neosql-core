@@ -2,10 +2,12 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "driver/addr.h"
 #include "driver/driver.h"
 #include "driver/header.h"
 #include "driver/list_block.h"
 #include "driver/page.h"
+#include "table.h"
 #include "utils/buf_reader.h"
 #include "utils/buf_writer.h"
 
@@ -127,72 +129,40 @@ static ListBlock driver_read_list_block(const Driver* driver, Addr addr)
     return block;
 }
 
-static void driver_write_block_part(const ListBlock* block, Page* page,
-                                    i16 page_offset, u64 part_payload_size)
-{
-    BufWriter writer
-        = buf_writer_new(page->payload + page_offset,
-                         LIST_BLOCK_HEADER_SIZE + part_payload_size);
-
-    buf_writer_write(&writer, &block->header.type, 1);
-    buf_writer_write(&writer, &block->header.is_overflow, 1);
-    buf_writer_write(&writer, &block->header.next, 6);
-    buf_writer_write(&writer, &block->header.payload_size, 8);
-    buf_writer_write(&writer, block->payload, part_payload_size);
-
-    page->free_space -= part_payload_size;
-    page->first_free_byte += part_payload_size;
-}
-
 // Write block into page without partitioning.
-static bool driver_try_write_at_exists_page(const Driver* driver,
-                                            const ListBlock* block, Addr addr)
+static void driver_write_list_block(const Driver* driver,
+                                    const ListBlock* block, Addr addr)
 {
-    bool block_written = false;
-    for (i32 i = 0; i < driver->header.pages_count && !block_written; ++i) {
-        // TODO: Optimize by reading only page headers.
-        Page page = page_read(i, driver->fd);
-
-        if (page.free_space
-            >= block->header.payload_size + LIST_BLOCK_HEADER_SIZE) {
-            driver_write_block_part(block, &page, addr.offset,
-                                    block->header.payload_size);
-            page_write(&page, driver->fd);
-            block_written = true;
-        }
-
-        page_free(&page);
-    }
-
-    return block_written;
+    Page page = page_read(addr.page_id, driver->fd);
+    page_append_block(&page, block);
+    page_write(&page, driver->fd);
+    page_free(&page);
 }
 
-// TODO: Write to cache
-static void driver_write_list_block(Driver* driver, const ListBlock* block,
-                                    Addr addr)
+// // TODO: Write to cache
+static Addr driver_write_list_block_with_allocation(Driver* driver,
+                                                    const ListBlock* block)
 {
-    if (driver_try_write_at_exists_page(driver, block, addr)) {
-        return;
-    }
-
-    i64 payload_written = 0;
-    i64 left_to_write = block->header.payload_size - payload_written;
+    Addr addr = { .offset = 0, .page_id = driver->header.pages_count };
+    u64 payload_written = 0;
+    u64 left_to_write = block->header.payload_size - payload_written;
 
     Page* pages = malloc(sizeof *pages);
     u64 pages_written = 0;
     pages[0] = page_new(driver->header.pages_count);
 
     while (true) {
-        i64 can_write = 0;
+        u64 can_write = 0;
 
         if (left_to_write >= pages[pages_written].free_space) {
-            can_write = pages[pages_written].free_space;
+            can_write = (u64)pages[pages_written].free_space;
         }
         else {
             can_write = left_to_write;
         }
 
-        driver_write_block_part(block, pages + pages_written, 0, can_write);
+        page_append_block_part(pages + pages_written, block, can_write,
+                               payload_written);
 
         left_to_write -= can_write;
 
@@ -210,6 +180,43 @@ static void driver_write_list_block(Driver* driver, const ListBlock* block,
         page_free(pages + i);
     }
     free(pages);
+
+    return addr;
+}
+
+static Addr driver_find_free_space(const Driver* driver,
+                                   const ListBlock* block)
+{
+
+    Addr addr = NULL_ADDR;
+
+    for (i32 page_id = 0; page_id < driver->header.pages_count; ++page_id) {
+        // TODO: Optimize by reading only page headers.
+        Page page = page_read(page_id, driver->fd);
+
+        if (page_can_append_block(&page, block)) {
+            addr = (Addr) { .page_id = page_id,
+                            .offset = page.first_free_byte };
+            page_free(&page);
+            break;
+        }
+
+        page_free(&page);
+    }
+
+    return addr;
+}
+
+static Addr driver_append_list_block(Driver* driver, const ListBlock* block)
+{
+    Addr addr = driver_find_free_space(driver, block);
+
+    if (!is_null(addr)) {
+        driver_write_list_block(driver, block, addr);
+        return addr;
+    }
+
+    return driver_write_list_block_with_allocation(driver, block);
 }
 
 DriverResult driver_open_db(i32 fd)
@@ -254,3 +261,17 @@ Driver driver_create_db(i32 fd)
 }
 
 void driver_free(Driver* driver) { }
+
+void driver_append_table(Driver* driver, const Table* table)
+{
+    ListBlock block = list_block_from_table(table);
+    Addr table_addr = driver_append_list_block(driver, &block);
+
+    driver->header.last_table = table_addr;
+
+    if (addr_cmp(driver->header.first_table, NULL_ADDR)) {
+        driver->header.first_table = table_addr;
+    }
+
+    header_write(&(driver->header), driver->fd);
+}

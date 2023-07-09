@@ -60,3 +60,30 @@ void page_write(const Page* page, i32 fd)
 }
 
 void page_free(Page* page) { free(page->payload); }
+
+void page_append_block_part(Page* page, const ListBlock* block, u64 part_size,
+                            u64 part_offset)
+{
+    BufWriter writer = buf_writer_new(page->payload + page->first_free_byte,
+                                      LIST_BLOCK_HEADER_SIZE + part_size);
+
+    buf_writer_write(&writer, &block->header.type, 1);
+    buf_writer_write(&writer, &block->header.is_overflow, 1);
+    buf_writer_write(&writer, &block->header.next, 6);
+    buf_writer_write(&writer, &block->header.payload_size, 8);
+    buf_writer_write(&writer, block->payload + part_offset, part_size);
+
+    page->free_space -= part_size;
+    page->first_free_byte += part_size;
+}
+
+void page_append_block(Page* page, const ListBlock* block)
+{
+    page_append_block_part(page, block, block->header.payload_size, 0);
+}
+
+bool page_can_append_block(const Page* page, const ListBlock* block)
+{
+    return page->free_space
+        >= block->header.payload_size + LIST_BLOCK_HEADER_SIZE;
+}

@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "database_constrains.h"
+#include "driver/list_block.h"
 #include "table.h"
 #include "utils/buf_reader.h"
 #include "utils/buf_writer.h"
@@ -10,7 +11,6 @@
 // Private methods signatures start.
 static TableResultStatus
 table_validate(const char* name, const Column* columns, u8 columns_count);
-static u64 binary_table_size(const Table* t);
 
 static void table_serialize_name(const char* name, BufWriter* writer);
 static void table_serialize_columns(const Column* columns, u8 columns_count,
@@ -60,7 +60,7 @@ void table_free(Table* t)
 
 SerializedTable table_serialize(const Table* t)
 {
-    u64 size = binary_table_size(t);
+    u64 size = table_serialized_size(t);
     u8* bytes = malloc(size);
 
     BufWriter writer = buf_writer_new(bytes, size);
@@ -180,7 +180,7 @@ static void table_deserialize_columns(Column** columns, u8 columns_count,
     table_deserialize_column_names(*columns, columns_count, reader);
 }
 
-static u64 binary_table_size(const Table* t)
+u64 table_serialized_size(const Table* t)
 {
     u64 size = 12; // Records addresses size.
     size += 8; // Records count size.
@@ -207,7 +207,7 @@ static void table_serialize_name(const char* name, BufWriter* writer)
 {
 
     u8 name_len = (u8)strlen(name);
-    buf_writer_write(writer, &(u8) { name_len }, 1);
+    buf_writer_write(writer, &name_len, 1);
     buf_writer_write(writer, name, name_len);
 }
 
@@ -245,4 +245,17 @@ static void table_serialize_columns(const Column* columns, u8 columns_count,
 {
     table_serialize_column_types(columns, columns_count, writer);
     table_serialize_column_names(columns, columns_count, writer);
+}
+
+ListBlock list_block_from_table(const Table* table)
+{
+    SerializedTable serialized = table_serialize(table);
+    ListBlock block = list_block_new(LIST_BLOCK_TYPE_TABLE, serialized.bytes,
+                                     serialized.size);
+    return block;
+}
+
+Table list_block_to_table(const ListBlock* block)
+{
+    return table_deserialize(block->payload, block->header.payload_size);
 }
