@@ -413,11 +413,16 @@ Test(TestDriver, test_driver_append_table)
     Table t3_copy = list_block_to_table(&block3);
     cr_assert(table_cmp(&t3_copy, &t3));
 
+    list_block_free(&block1);
+    list_block_free(&block2);
+    list_block_free(&block3);
+
     table_free(&t1);
     table_free(&t1_copy);
     table_free(&t2);
     table_free(&t2_copy);
     table_free(&t3);
+    table_free(&t3_copy);
 
     driver_free(&driver);
     close(fd);

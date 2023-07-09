@@ -64,7 +64,7 @@ Test(TestBlock, test_list_block_from_table)
     buf_reader_read(&reader, &name_len_buf, 1);
     cr_assert(eq(u64, name_len_buf, strlen(res.table.name)));
 
-    char name[1000];
+    char name[1000] = { 0 };
     buf_reader_read(&reader, name, name_len_buf);
     cr_assert(eq(str, name, res.table.name));
 
@@ -81,8 +81,8 @@ Test(TestBlock, test_list_block_from_table)
     cr_assert(eq(u16, max_size_buf, c2.type.max_size));
 
     u8 column_name_len1, column_name_len2;
-    char name1[1000];
-    char name2[1000];
+    char name1[1000] = { 0 };
+    char name2[1000] = { 0 };
 
     buf_reader_read(&reader, &column_name_len1, 1);
     cr_assert(eq(u8, column_name_len1, strlen(c1.name)));

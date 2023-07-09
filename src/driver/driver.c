@@ -274,4 +274,6 @@ void driver_append_table(Driver* driver, const Table* table)
     }
 
     header_write(&(driver->header), driver->fd);
+
+    list_block_free(&block);
 }

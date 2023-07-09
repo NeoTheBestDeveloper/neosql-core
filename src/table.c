@@ -252,6 +252,7 @@ ListBlock list_block_from_table(const Table* table)
     SerializedTable serialized = table_serialize(table);
     ListBlock block = list_block_new(LIST_BLOCK_TYPE_TABLE, serialized.bytes,
                                      serialized.size);
+    serialized_table_free(&serialized);
     return block;
 }
 
