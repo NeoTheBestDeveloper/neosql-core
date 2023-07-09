@@ -1,7 +1,7 @@
 #include "driver/addr.h"
 #include "driver/page.h"
 
-int64_t addr_offset(Addr addr)
+i64 addr_offset(Addr addr)
 {
     return addr.page_id * DEFAULT_PAGE_SIZE + addr.offset;
 }

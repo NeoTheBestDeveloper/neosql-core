@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-
 #include "addr.h"
 
 #define HEADER_SIZE (100)
@@ -16,7 +14,7 @@ typedef enum {
 typedef struct {
     Addr last_table;
     Addr first_table;
-    int32_t pages_count;
+    i32 pages_count;
     StorageType storage_type; // At file must be int8_t number.
 } Header;
 
@@ -36,5 +34,5 @@ typedef struct {
 Header header_default(void);
 Header header_new(StorageType storage_type);
 
-HeaderResult header_read(int32_t fd);
-void header_write(Header const*, int32_t fd);
+HeaderResult header_read(i32 fd);
+void header_write(Header const*, i32 fd);

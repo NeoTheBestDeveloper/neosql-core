@@ -18,14 +18,14 @@ e_test_driver = executable('e_test_driver', 'test_driver.c',
                           include_directories: incdir)
 test('Test driver.', e_test_driver)
 
-e_test_connection = executable('e_test_connection', 'test_connection.c', 
-                          dependencies: criterion,
-                          link_with: neosql_core, 
-                          include_directories: incdir)
-test('Test connection.', e_test_connection)
-
 e_test_block = executable('e_test_block', 'test_block.c', 
                           dependencies: criterion,
                           link_with: neosql_core, 
                           include_directories: incdir)
 test('Test block.', e_test_block)
+
+e_test_table = executable('e_test_table', 'test_table.c', 
+                          dependencies: criterion,
+                          link_with: neosql_core, 
+                          include_directories: incdir)
+test('Test table.', e_test_table)

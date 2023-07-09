@@ -2,7 +2,7 @@
 
 #include "utils/buf_reader.h"
 
-BufReader buf_reader_new(const void* buf, uint64_t buf_size)
+BufReader buf_reader_new(const void* buf, u64 buf_size)
 {
     BufReader reader = {
         .buf = buf,
@@ -12,8 +12,7 @@ BufReader buf_reader_new(const void* buf, uint64_t buf_size)
     return reader;
 }
 
-BufReaderResult buf_reader_read(BufReader* reader, void* dst,
-                                uint64_t dst_size)
+BufReaderResult buf_reader_read(BufReader* reader, void* dst, u64 dst_size)
 {
     BufReaderResult res;
 
@@ -27,7 +26,7 @@ BufReaderResult buf_reader_read(BufReader* reader, void* dst,
         return res;
     }
 
-    uint64_t readen = reader->buf_size - reader->buf_offset;
+    u64 readen = reader->buf_size - reader->buf_offset;
     memcpy(dst, reader->buf, readen);
     reader->buf_offset += readen;
 

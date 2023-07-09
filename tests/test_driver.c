@@ -1,5 +1,4 @@
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -12,8 +11,8 @@
 #include "driver/driver.h"
 #include "driver/list_block.h"
 #include "driver/page.h"
-#include "os.h"
 #include "utils/buf_reader.h"
+#include "utils/os.h"
 
 // Static functions from driver.h
 ListBlock driver_read_list_block(Driver* const driver, Addr addr);

@@ -1,13 +1,12 @@
 #pragma once
 
-#include <stdbool.h>
-#include <stdint.h>
+#include "utils/types.h"
 
 #define NULL_ADDR ((Addr) { .page_id = 0, .offset = 0 })
 
 typedef struct {
-    int32_t page_id; // Starts from zero.
-    int16_t offset; // Offset inside page payload, not inside all page.
+    i32 page_id; // Starts from zero.
+    i16 offset; // Offset inside page payload, not inside all page.
 } Addr;
 
 // Calculate absolute addres offset from file start.

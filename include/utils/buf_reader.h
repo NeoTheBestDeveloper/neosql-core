@@ -1,12 +1,13 @@
 #pragma once
 
-#include <stdint.h>
+#include "utils/types.h"
 
+// TODO: Change BufWriter and BufReader to Stream.
 // This reader use stream reading.
 typedef struct {
-    const uint8_t* buf;
-    uint64_t buf_size;
-    uint64_t buf_offset;
+    const u8* buf;
+    u64 buf_size;
+    u64 buf_offset;
 } BufReader;
 
 typedef enum {
@@ -15,10 +16,9 @@ typedef enum {
 } BufReaderResultStatus;
 
 typedef struct {
-    uint64_t readen;
+    u64 readen;
     BufReaderResultStatus status;
 } BufReaderResult;
 
-BufReader buf_reader_new(void const* buf, uint64_t buf_size);
-BufReaderResult buf_reader_read(BufReader* reader, void* dst,
-                                uint64_t dst_size);
+BufReader buf_reader_new(void const* buf, u64 buf_size);
+BufReaderResult buf_reader_read(BufReader* reader, void* dst, u64 dst_size);

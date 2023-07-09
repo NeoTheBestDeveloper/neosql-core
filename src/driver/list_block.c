@@ -5,9 +5,10 @@
 #include "driver/page.h"
 #include "utils/buf_reader.h"
 #include "utils/buf_writer.h"
+#include "utils/mem.h"
 
-ListBlock list_block_new(ListBlockType type, uint8_t const* payload,
-                         uint64_t payload_size)
+ListBlock list_block_new(ListBlockType type, u8 const* payload,
+                         u64 payload_size)
 {
     ListBlock block = {
         .header =
@@ -17,10 +18,8 @@ ListBlock list_block_new(ListBlockType type, uint8_t const* payload,
                 .payload_size = payload_size,
                 .next = NULL_ADDR,
             },
-        .payload = malloc(payload_size),
+        .payload = copy_mem(payload, payload_size),
     };
-
-    memcpy(block.payload, payload, payload_size);
 
     return block;
 }

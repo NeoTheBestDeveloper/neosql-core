@@ -27,16 +27,16 @@ Header header_new(StorageType storage_type)
     };
 }
 
-HeaderResult header_read(int32_t fd)
+HeaderResult header_read(i32 fd)
 {
-    uint8_t header_buf[HEADER_SIZE] = { 0 };
+    u8 header_buf[HEADER_SIZE] = { 0 };
     char magic_buf[7] = { 0 };
 
     Header header = { 0 };
     HeaderResult res = { 0 };
 
     lseek(fd, 0, SEEK_SET);
-    int64_t readen = read(fd, header_buf, HEADER_SIZE);
+    i64 readen = read(fd, header_buf, HEADER_SIZE);
 
     // Check header size.
     if (readen < HEADER_SIZE) {
@@ -57,7 +57,7 @@ HeaderResult header_read(int32_t fd)
 
     buf_reader_read(&reader, &(header.pages_count), 4);
 
-    int8_t storage_type_buf;
+    i8 storage_type_buf;
     buf_reader_read(&reader, &storage_type_buf, 1);
     header.storage_type = storage_type_buf;
 
@@ -75,12 +75,12 @@ HeaderResult header_read(int32_t fd)
     return res;
 }
 
-void header_write(Header const* header, int32_t fd)
+void header_write(Header const* header, i32 fd)
 {
-    uint8_t header_buf[HEADER_SIZE] = { 0 };
+    u8 header_buf[HEADER_SIZE] = { 0 };
     BufWriter writer = buf_writer_new(header_buf, HEADER_SIZE);
 
-    int8_t storage_type = header->storage_type;
+    i8 storage_type = header->storage_type;
 
     buf_writer_write(&writer, NEOSQL_MAGIC, 6);
     buf_writer_write(&writer, &(header->pages_count), 4);

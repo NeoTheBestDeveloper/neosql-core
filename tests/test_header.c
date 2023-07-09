@@ -6,7 +6,7 @@
 #include "criterion/new/assert.h"
 
 #include "driver/header.h"
-#include "os.h"
+#include "utils/os.h"
 
 typedef enum {
     TEST_HEADER_READ = 0,
