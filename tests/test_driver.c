@@ -29,13 +29,16 @@ typedef enum {
     TEST_DRIVER_WRITE_BLOCK_AT_EXISTS_PAGES = 4,
     TEST_DRIVER_APPEND_PAGE = 5,
     TEST_DRIVER_APPEND_TABLE = 6,
+    TEST_DRIVER_FIND_TABLE_NOT_FOUND = 7,
+    TEST_DRIVER_FIND_TABLE_OK = 8,
 } TestId;
 
 char tmp_files[][100] = {
     "test_tmp_file_test_driver_0.db", "test_tmp_file_test_driver_1.db",
     "test_tmp_file_test_driver_2.db", "test_tmp_file_test_driver_3.db",
     "test_tmp_file_test_driver_4.db", "test_tmp_file_test_driver_5.db",
-    "test_tmp_file_test_driver_6.db",
+    "test_tmp_file_test_driver_6.db", "test_tmp_file_test_driver_7.db",
+    "test_tmp_file_test_driver_8.db",
 };
 
 uint8_t header_reserved_mock[HEADER_RESERVED_SIZE] = { 0 };
@@ -242,11 +245,11 @@ Test(TestDriver, test_driver_write_block_at_exists_page)
 
     ListBlock block = {
         .header = {
-            .is_overflow = false, 
-            .next = (Addr){.offset = 100, .page_id = 0}, 
-            .payload_size = 18, 
+            .is_overflow = false,
+            .next = (Addr){.offset = 100, .page_id = 0},
+            .payload_size = 18,
             .type = LIST_BLOCK_TYPE_RECORD,
-        }, 
+        },
         .payload = malloc(18),
     };
     memcpy(block.payload, "HI GUYS I AM PIVO!", block.header.payload_size);
@@ -258,10 +261,11 @@ Test(TestDriver, test_driver_write_block_at_exists_page)
     read(fd, &free_space_buf, 2);
     read(fd, &first_free_byte_buf, 2);
 
-    cr_assert(
-        eq(i16, first_free_byte_buf, (int16_t)block.header.payload_size));
+    cr_assert(eq(i16, first_free_byte_buf,
+                 (i16)(block.header.payload_size + LIST_BLOCK_HEADER_SIZE)));
     cr_assert(eq(i16, free_space_buf,
-                 (int16_t)(PAGE_PAYLOAD_SIZE - block.header.payload_size)));
+                 (i16)(PAGE_PAYLOAD_SIZE - block.header.payload_size
+                       - LIST_BLOCK_HEADER_SIZE)));
 
     lseek(fd, 100 + PAGE_HEADER_SIZE, SEEK_SET);
 
@@ -322,9 +326,11 @@ Test(TestDriver, test_driver_write_block_at_exists_pages)
     read(fd, &first_free_byte_buf, 2);
 
     cr_assert(
-        eq(i16, first_free_byte_buf, (int16_t)block.header.payload_size));
+        eq(i16, first_free_byte_buf,
+           (int16_t)(block.header.payload_size + LIST_BLOCK_HEADER_SIZE)));
     cr_assert(eq(i16, free_space_buf,
-                 (int16_t)(PAGE_PAYLOAD_SIZE - block.header.payload_size)));
+                 (int16_t)(PAGE_PAYLOAD_SIZE - block.header.payload_size
+                           - LIST_BLOCK_HEADER_SIZE)));
 
     list_block_free(&block);
     driver_free(&driver);
@@ -367,10 +373,9 @@ Test(TestDriver, test_driver_append_page)
     delete_tmp_file(test_id);
 }
 
-// void driver_append_table(Driver*, const Table*);
 Test(TestDriver, test_driver_append_table)
 {
-    TestId test_id = TEST_DRIVER_WRITE_BLOCK_AT_EXISTS_PAGES;
+    TestId test_id = TEST_DRIVER_APPEND_TABLE;
     int32_t fd = open(tmp_files[test_id], O_CREAT | O_BINARY | O_RDWR, 0666);
 
     Driver driver = driver_create_db(fd);
@@ -423,6 +428,75 @@ Test(TestDriver, test_driver_append_table)
     table_free(&t2_copy);
     table_free(&t3);
     table_free(&t3_copy);
+
+    driver_free(&driver);
+    close(fd);
+    delete_tmp_file(test_id);
+}
+
+Test(TestDriver, test_driver_find_table_not_found)
+{
+    TestId test_id = TEST_DRIVER_WRITE_BLOCK_AT_EXISTS_PAGES;
+    int32_t fd = open(tmp_files[test_id], O_CREAT | O_BINARY | O_RDWR, 0666);
+
+    Driver driver = driver_create_db(fd);
+
+    TableSearchResult res = driver_find_table(&driver, "some name");
+
+    cr_assert(eq(u32, res.status, TABLE_SEARCH_NOT_FOUND));
+
+    driver_free(&driver);
+    close(fd);
+    delete_tmp_file(test_id);
+}
+
+Test(TestDriver, test_driver_find_table_ok)
+{
+    TestId test_id = TEST_DRIVER_FIND_TABLE_OK;
+    int32_t fd = open(tmp_files[test_id], O_CREAT | O_BINARY | O_RDWR, 0666);
+
+    Driver driver = driver_create_db(fd);
+
+    Column columns1[]
+        = { { .name = "c1",
+              { .id = TIMESTAMP, .nullable = false, .max_size = 0 } } };
+
+    Column columns2[] = {
+        {
+            .name = "c1",
+            { .id = TIMESTAMP, .nullable = false, .max_size = 0 },
+        },
+        {
+            .name = "c2",
+            { .id = VARCHAR, .nullable = false, .max_size = 1024 },
+        },
+    };
+
+    Table t1 = table_new("Table 1", columns1, 1).table;
+    Table t2 = table_new("Table 2", columns2, 2).table;
+    Table t3 = table_new("Table 3", columns1, 1).table;
+    driver_append_table(&driver, &t1);
+    driver_append_table(&driver, &t2);
+    driver_append_table(&driver, &t3);
+
+    TableSearchResult res1 = driver_find_table(&driver, "Table 2");
+    TableSearchResult res2 = driver_find_table(&driver, "Table 1");
+    TableSearchResult res3 = driver_find_table(&driver, "Table 3");
+
+    cr_assert(eq(u32, res1.status, TABLE_OK));
+    cr_assert(eq(u32, res2.status, TABLE_OK));
+    cr_assert(eq(u32, res3.status, TABLE_OK));
+
+    cr_assert(table_cmp(&t1, &(res2.table)));
+    cr_assert(table_cmp(&t2, &(res1.table)));
+    cr_assert(table_cmp(&t3, &(res3.table)));
+
+    table_free(&t1);
+    table_free(&t2);
+    table_free(&t3);
+    table_free(&(res1.table));
+    table_free(&(res2.table));
+    table_free(&(res3.table));
 
     driver_free(&driver);
     close(fd);

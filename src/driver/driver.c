@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -134,7 +135,7 @@ static void driver_write_list_block(const Driver* driver,
                                     const ListBlock* block, Addr addr)
 {
     Page page = page_read(addr.page_id, driver->fd);
-    page_append_block(&page, block);
+    page_insert_block(&page, block, addr.offset);
     page_write(&page, driver->fd);
     page_free(&page);
 }
@@ -212,7 +213,10 @@ static Addr driver_append_list_block(Driver* driver, const ListBlock* block)
     Addr addr = driver_find_free_space(driver, block);
 
     if (!is_null(addr)) {
-        driver_write_list_block(driver, block, addr);
+        Page page = page_read(addr.page_id, driver->fd);
+        page_append_block(&page, block);
+        page_write(&page, driver->fd);
+        page_free(&page);
         return addr;
     }
 
@@ -264,16 +268,57 @@ void driver_free(Driver* driver) { }
 
 void driver_append_table(Driver* driver, const Table* table)
 {
-    ListBlock block = list_block_from_table(table);
-    Addr table_addr = driver_append_list_block(driver, &block);
+    ListBlock new_tail = list_block_from_table(table);
+    Addr new_tail_addr = driver_append_list_block(driver, &new_tail);
 
-    driver->header.last_table = table_addr;
-
-    if (addr_cmp(driver->header.first_table, NULL_ADDR)) {
-        driver->header.first_table = table_addr;
+    if (is_null(driver->header.first_table)) {
+        driver->header.first_table = new_tail_addr;
     }
+
+    if (!is_null(driver->header.last_table)) {
+        ListBlock tail_block
+            = driver_read_list_block(driver, driver->header.last_table);
+
+        tail_block.header.next = new_tail_addr;
+
+        driver_write_list_block(driver, &tail_block,
+                                driver->header.last_table);
+
+        list_block_free(&tail_block);
+    }
+
+    driver->header.last_table = new_tail_addr;
 
     header_write(&(driver->header), driver->fd);
 
-    list_block_free(&block);
+    list_block_free(&new_tail);
+}
+
+TableSearchResult driver_find_table(const Driver* driver, const char* name)
+{
+    TableSearchResult res = {
+        .status = TABLE_SEARCH_NOT_FOUND,
+    };
+
+    Addr next = driver->header.first_table;
+
+    while (!is_null(next)) {
+        ListBlock block = driver_read_list_block(driver, next);
+
+        Table table = list_block_to_table(&block);
+
+        if (0 == strcmp(table.name, name)) {
+            list_block_free(&block);
+            res.table = table;
+            res.status = TABLE_SEARCH_OK;
+            return res;
+        }
+
+        table_free(&table);
+
+        next = block.header.next;
+        list_block_free(&block);
+    }
+
+    return res;
 }

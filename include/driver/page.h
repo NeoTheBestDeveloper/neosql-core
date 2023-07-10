@@ -28,3 +28,5 @@ void page_append_block_part(Page*, const ListBlock*, u64 part_size,
                             u64 part_offset);
 void page_append_block(Page*, const ListBlock*);
 bool page_can_append_block(const Page*, const ListBlock*);
+
+void page_insert_block(Page*, const ListBlock*, i16 offset);

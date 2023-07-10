@@ -6,9 +6,16 @@
 #include "utils/buf_writer.h"
 
 // Calculate offset inside entire file.
-static i64 calc_page_payload_offset(i32 page_id)
+static i64 page_calc_payload_offset(i32 page_id)
 {
     return page_id * DEFAULT_PAGE_SIZE + HEADER_SIZE;
+}
+
+// bytes_written maybe negative.
+static void page_update_header(Page* page, i16 bytes_written)
+{
+    page->first_free_byte += bytes_written;
+    page->free_space -= bytes_written;
 }
 
 Page page_new(i32 page_id)
@@ -27,7 +34,7 @@ Page page_read(i32 page_id, i32 fd)
         .page_id = page_id,
     };
 
-    i64 offset = calc_page_payload_offset(page_id);
+    i64 offset = page_calc_payload_offset(page_id);
     lseek(fd, offset, SEEK_SET);
 
     u8 page_header[PAGE_HEADER_SIZE] = { 0 };
@@ -44,7 +51,7 @@ Page page_read(i32 page_id, i32 fd)
 
 void page_write(const Page* page, i32 fd)
 {
-    i64 offset = calc_page_payload_offset(page->page_id);
+    i64 offset = page_calc_payload_offset(page->page_id);
 
     u8 page_header[PAGE_HEADER_SIZE] = { 0 };
     BufWriter header_writer = buf_writer_new(page_header, PAGE_HEADER_SIZE);
@@ -73,8 +80,8 @@ void page_append_block_part(Page* page, const ListBlock* block, u64 part_size,
     buf_writer_write(&writer, &block->header.payload_size, 8);
     buf_writer_write(&writer, block->payload + part_offset, part_size);
 
-    page->free_space -= part_size;
-    page->first_free_byte += part_size;
+    i16 bytes_written = (i16)(part_size + LIST_BLOCK_HEADER_SIZE);
+    page_update_header(page, bytes_written);
 }
 
 void page_append_block(Page* page, const ListBlock* block)
@@ -86,4 +93,17 @@ bool page_can_append_block(const Page* page, const ListBlock* block)
 {
     return page->free_space
         >= block->header.payload_size + LIST_BLOCK_HEADER_SIZE;
+}
+
+void page_insert_block(Page* page, const ListBlock* block, i16 offset)
+{
+    BufWriter writer
+        = buf_writer_new(page->payload + offset,
+                         LIST_BLOCK_HEADER_SIZE + block->header.payload_size);
+
+    buf_writer_write(&writer, &block->header.type, 1);
+    buf_writer_write(&writer, &block->header.is_overflow, 1);
+    buf_writer_write(&writer, &block->header.next, 6);
+    buf_writer_write(&writer, &block->header.payload_size, 8);
+    buf_writer_write(&writer, block->payload, block->header.payload_size);
 }

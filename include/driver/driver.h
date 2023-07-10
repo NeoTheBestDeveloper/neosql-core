@@ -22,6 +22,16 @@ typedef struct {
     DriverResultStatus status;
 } DriverResult;
 
+typedef enum {
+    TABLE_SEARCH_OK = 0,
+    TABLE_SEARCH_NOT_FOUND = 1,
+} TableSearchResultStatus;
+
+typedef struct {
+    Table table;
+    TableSearchResultStatus status;
+} TableSearchResult;
+
 /* Create new database inside file with default header and write
  "DEFAULT_EMPTY_DB_ZERO_PAGES_COUNT" to the file. */
 Driver driver_create_db(i32 fd);
@@ -32,6 +42,7 @@ DriverResult driver_open_db(i32 fd);
 void driver_free(Driver*);
 
 void driver_append_table(Driver*, const Table*);
-// driver_find_table();
+TableSearchResult driver_find_table(const Driver*, const char*);
+
 // driver_delete_table();
 // driver_update_table();
