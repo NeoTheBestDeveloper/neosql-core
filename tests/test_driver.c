@@ -126,7 +126,7 @@ Test(TestDriver, test_driver_create)
     }
 
     driver_free(&driver);
-    delete_tmp_file(test_id);
+    // delete_tmp_file(test_id);
 
     close(fd);
 }
@@ -500,5 +500,5 @@ Test(TestDriver, test_driver_find_table_ok)
 
     driver_free(&driver);
     close(fd);
-    delete_tmp_file(test_id);
+    // delete_tmp_file(test_id);
 }

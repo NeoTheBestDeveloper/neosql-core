@@ -12,8 +12,8 @@ typedef enum {
 } StorageType;
 
 typedef struct {
-    Addr last_table;
     Addr first_table;
+    Addr last_table;
     i32 pages_count;
     StorageType storage_type; // At file must be int8_t number.
 } Header;
