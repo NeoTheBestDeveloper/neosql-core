@@ -10,6 +10,7 @@
 
 typedef struct {
     u8* payload;
+    i32 id;
     u16 free_space;
 } Page;
 
