@@ -31,12 +31,13 @@ typedef struct {
 } HeaderResult;
 
 #define DEFAULT_HEADER                                                        \
-    ((Header) {                                                               \
+    (Header)                                                                  \
+    {                                                                         \
         .pages_count = DEFAULT_PAGES_COUNT,                                   \
         .first_table = DEFAULT_FIRST_TABLE_ADDR,                              \
         .last_table = DEFAULT_LAST_TABLE_ADDR,                                \
         .cached_pages_count = DEFAULT_CACHED_PAGES_COUNT,                     \
-    })
+    }
 
 // Read header from database file.
 HeaderResult header_new(i32 fd);
