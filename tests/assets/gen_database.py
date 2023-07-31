@@ -412,85 +412,73 @@ def get_t2_r2_part2_addr(t2_r1_addr: tuple[int, int], t2_r1: Record) -> tuple[in
     return (0, t2_r1_addr[1] + len(bytes(Block(bytes(t2_r1)))))
 
 
-""" def main() -> None: """
-"""     t1 = get_first_table() """
-"""     t1_addr = get_t1_addr() """
-""""""
-"""     t2 = get_last_table() """
-"""     t2_addr = get_t2_addr(t1) """
-""""""
-"""     r1_1 = get_first_table_first_record(t1) """
-"""     t1_r1_addr = get_t1_r1_addr(t2_addr, t2) """
-""""""
-"""     r2_1 = get_second_table_first_record(t2) """
-"""     t2_r1_addr = get_t2_r1_addr(t1_r1_addr, r1_1) """
-""""""
-"""     r2_2 = get_second_table_second_record(t2) """
-"""     t2_r2_block_header_addr = get_t2_r2_header_addr() """
-"""     t2_r2_part1_addr = get_t2_r2_part1_addr() """
-"""     t2_r2_part2_addr = get_t2_r2_part2_addr(t2_r1_addr, r2_1) """
-""""""
-"""     t1.first_record = t1_r1_addr """
-"""     t1.last_record = t1.first_record """
-""""""
-"""     t2.first_record = t2_r1_addr """
-"""     t2.last_record = t2_r2_block_header_addr """
-""""""
-"""     table1_block = Block(bytes(t1)) """
-"""     table1_block.header.next = t2_addr """
-""""""
-"""     table2_block = Block(bytes(t2)) """
-"""     table2_block.header.next = NULL_ADDR """
-""""""
-"""     table1_record1_block = Block(bytes(r1_1)) """
-"""     table1_record1_block.header.next = NULL_ADDR """
-""""""
-"""     table2_record1_block = Block(bytes(r2_1)) """
-"""     table2_record1_block.header.next = t2_r2_block_header_addr """
-""""""
-"""     table2_record2_block = PartedBlock(bytes(r2_2)) """
-"""     table2_record2_block.header.next = NULL_ADDR  """
-"""     table2_record2_block.parts[0].header.next = t2_r2_part2_addr  """
-"""     table2_record2_block.parts[1].header.next = NULL_ADDR """
-""""""
-"""     p1 = Page() """
-"""     p1.append_payload(bytes(table1_block)) """
-"""     p1.append_payload(bytes(table2_block)) """
-"""     p1.append_payload(bytes(table1_record1_block)) """
-"""     p1.append_payload(bytes(table2_record1_block)) """
-"""     p1.append_payload(bytes(table2_record2_block.parts[1])) """
-""""""
-"""     p2 = Page() """
-"""     p2.append_payload(bytes(table2_record2_block.header)) """
-"""     p2.append_payload(bytes(table2_record2_block.parts[0])) """
-""""""
-"""     header = Header( """
-"""         pages_count=2, """
-"""         first_table=t1_addr, """
-"""         last_table=t2_addr, """
-"""         cached_pages_count=8192, """
-"""     ) """
-""""""
-"""     buf = BytesIO() """
-"""     buf.write(bytes(header)) """
-"""     buf.write(bytes(p1)) """
-"""     buf.write(bytes(p2)) """
-""""""
-"""     with open(VALID_DB_PATH, "wb") as fout: """
-"""         fout.write(buf.getvalue()) """
-
-
 def main() -> None:
+    t1 = get_first_table()
+    t1_addr = get_t1_addr()
+
+    t2 = get_last_table()
+    t2_addr = get_t2_addr(t1)
+    print(t2_addr)
+
+    r1_1 = get_first_table_first_record(t1)
+    t1_r1_addr = get_t1_r1_addr(t2_addr, t2)
+
+    r2_1 = get_second_table_first_record(t2)
+    t2_r1_addr = get_t2_r1_addr(t1_r1_addr, r1_1)
+
+    r2_2 = get_second_table_second_record(t2)
+    t2_r2_block_header_addr = get_t2_r2_header_addr()
+    t2_r2_part1_addr = get_t2_r2_part1_addr()
+    t2_r2_part2_addr = get_t2_r2_part2_addr(t2_r1_addr, r2_1)
+
+    t1.first_record = t1_r1_addr
+    t1.last_record = t1.first_record
+
+    t2.first_record = t2_r1_addr
+    t2.last_record = t2_r2_block_header_addr
+
+    table1_block = Block(bytes(t1))
+    table1_block.header.next = t2_addr
+
+    table2_block = Block(bytes(t2))
+    table2_block.header.next = NULL_ADDR
+
+    table1_record1_block = Block(bytes(r1_1))
+    table1_record1_block.header.next = NULL_ADDR
+
+    table2_record1_block = Block(bytes(r2_1))
+    table2_record1_block.header.next = t2_r2_block_header_addr
+
+    table2_record2_block = PartedBlock(bytes(r2_2))
+    table2_record2_block.header.next = NULL_ADDR
+    table2_record2_block.parts[0].header.next = t2_r2_part2_addr
+    table2_record2_block.parts[1].header.next = NULL_ADDR
+
+    p1 = Page()
+    p1.append_payload(bytes(table1_block))
+    p1.append_payload(bytes(table2_block))
+    p1.append_payload(bytes(table1_record1_block))
+    p1.append_payload(bytes(table2_record1_block))
+    p1.append_payload(bytes(table2_record2_block.parts[1]))
+
+    p2 = Page()
+    p2.append_payload(bytes(table2_record2_block.header))
+    p2.append_payload(bytes(table2_record2_block.parts[0]))
+
     header = Header(
-        pages_count=0,
-        first_table=NULL_ADDR,
-        last_table=NULL_ADDR,
+        pages_count=2,
+        first_table=t1_addr,
+        last_table=t2_addr,
         cached_pages_count=8192,
     )
-    serialised_header = bytes(header)
 
-    for byte in serialised_header:
-        print(hex(byte), end=", ")
+    buf = BytesIO()
+    buf.write(bytes(header))
+    buf.write(bytes(p1))
+    buf.write(bytes(p2))
+
+    """ with open(VALID_DB_PATH, "wb") as fout: """
+    """     fout.write(buf.getvalue()) """
 
 
 if __name__ == "__main__":

@@ -19,6 +19,17 @@ typedef struct {
     u32 cached_pages_count;
 } Header;
 
+typedef enum {
+    HEADER_OK = 0,
+    HEADER_FILE_INVALID_SIZE = 1,
+    HEADER_INVALID_MAGIC = 2,
+} HeaderResultStatus;
+
+typedef struct {
+    HeaderResultStatus status;
+    Header header;
+} HeaderResult;
+
 #define DEFAULT_HEADER                                                        \
     ((Header) {                                                               \
         .pages_count = DEFAULT_PAGES_COUNT,                                   \
@@ -26,3 +37,8 @@ typedef struct {
         .last_table = DEFAULT_LAST_TABLE_ADDR,                                \
         .cached_pages_count = DEFAULT_CACHED_PAGES_COUNT,                     \
     })
+
+// Read header from database file.
+HeaderResult header_new(i32 fd);
+
+void header_write(const Header*, i32 fd);
