@@ -1,5 +1,7 @@
 #pragma once
 
+#include "nclib.h"
+
 #ifdef _WIN64
 
 #include <io.h>
@@ -16,3 +18,5 @@
 #define O_BINARY 0
 
 #endif // DEBUG
+
+i32 open_db_file(const char* db_path);

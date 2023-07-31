@@ -1,6 +1,0 @@
-#pragma once
-
-#define MAX_TABLE_NAME_SIZE (255)
-#define MAX_TABLE_COLUMN_NAME_SIZE (255)
-#define MAX_COLUMNS_COUNT (255)
-#define MAX_VARCHAR_SIZE (65535) // 2 ^ 16 - 1

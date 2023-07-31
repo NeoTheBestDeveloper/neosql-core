@@ -19,3 +19,5 @@ libgit2.wrap
 libgit2-cmake.wrap
 build-mingw
 build-mingw_release
+libnclib
+venv

@@ -1,12 +1,7 @@
-subdir('driver')
-subdir('sql')
+subdir('database_driver')
 subdir('utils')
 
-neosql_core_src = files(
-  # 'record.c',
-  'table.c',
-)
+neosql_core_src = files()
 
-neosql_core_src += driver_src
-neosql_core_src += sql_src
+neosql_core_src += database_driver_src
 neosql_core_src += utils_src
