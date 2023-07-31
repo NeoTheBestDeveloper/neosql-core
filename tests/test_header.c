@@ -1,6 +1,5 @@
 #include <unistd.h>
 
-#include "criterion/assert.h"
 #include "criterion/criterion.h"
 #include "criterion/new/assert.h"
 

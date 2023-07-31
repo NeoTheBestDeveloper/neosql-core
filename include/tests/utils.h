@@ -7,16 +7,19 @@
 
 #include "utils/os.h"
 
-#define TEST_DB_PATH "../tests/assets/database.db"
+#define TEST_DB_PATH ("../tests/assets/database.db")
+#define PAGE1_PAYLOAD_BLOB_PATH ("../tests/assets/page1_payload_blob.bin")
+#define PAGE2_PAYLOAD_BLOB_PATH ("../tests/assets/page2_payload_blob.bin")
+
 #define TMP_FILE_PATH_LEN (100)
 
 static inline void gen_rand_str(u64 size, char* buf)
 {
     srand((u32)clock());
 
-    int min = 97;
-    int max = 122;
-    int range = (max - min) + 1;
+    i32 min = 97;
+    i32 max = 122;
+    i32 range = (max - min) + 1;
 
     for (u64 i = 0; i < size; ++i) {
         buf[i] = (char)(min + (rand() % range));

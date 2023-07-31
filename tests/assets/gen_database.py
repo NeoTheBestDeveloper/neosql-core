@@ -418,7 +418,6 @@ def main() -> None:
 
     t2 = get_last_table()
     t2_addr = get_t2_addr(t1)
-    print(t2_addr)
 
     r1_1 = get_first_table_first_record(t1)
     t1_r1_addr = get_t1_r1_addr(t2_addr, t2)
@@ -476,6 +475,7 @@ def main() -> None:
     buf.write(bytes(header))
     buf.write(bytes(p1))
     buf.write(bytes(p2))
+
 
     """ with open(VALID_DB_PATH, "wb") as fout: """
     """     fout.write(buf.getvalue()) """
