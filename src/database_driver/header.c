@@ -13,15 +13,7 @@
 static Header header_deserialise(u8* buf)
 {
     Stream stream = stream_new(buf, HEADER_SIZE, DEFAULT_DATABASE_ENDIAN);
-    stream_seek(&stream, HEADER_MAGIC_SIZE, STREAM_START);
-
-    Header header;
-    header.pages_count = stream_read_u32(&stream);
-    header.first_table = stream_read_addr(&stream);
-    header.last_table = stream_read_addr(&stream);
-    header.cached_pages_count = stream_read_u32(&stream);
-
-    return header;
+    return stream_read_header(&stream);
 }
 
 HeaderResult header_new(i32 fd)
@@ -51,15 +43,10 @@ HeaderResult header_new(i32 fd)
 // Convert header to bytes which allocated on heap.
 static u8* header_serialise(const Header* header)
 {
-    u8* buf = calloc(HEADER_SIZE, 1);
+    u8* buf = malloc(HEADER_SIZE);
 
     Stream stream = stream_new(buf, HEADER_SIZE, DEFAULT_DATABASE_ENDIAN);
-
-    stream_write_bytes(&stream, (const u8*)HEADER_MAGIC, HEADER_MAGIC_SIZE);
-    stream_write_u32(&stream, header->pages_count);
-    stream_write_addr(&stream, header->first_table);
-    stream_write_addr(&stream, header->last_table);
-    stream_write_u32(&stream, header->cached_pages_count);
+    stream_write_header(&stream, header);
 
     return buf;
 }
