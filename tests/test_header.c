@@ -9,7 +9,7 @@
 #include "tests/utils.h"
 #include "utils/os.h"
 
-u8* header_serialise(const Header*);
+void header_serialise(const Header* header, u8* buf);
 Header header_deserialise(u8*);
 
 static u8 expected_serialised_header[] = {
@@ -50,11 +50,10 @@ static u8 with_corrupted_magic_serialised_header[] = {
 Test(TestHeader, test_header_serialisation)
 {
     Header expected_header = DEFAULT_HEADER;
-    u8* serialised_header = header_serialise(&expected_header);
+    u8 serialised_header[HEADER_SIZE] = { 0 };
+    header_serialise(&expected_header, serialised_header);
     cr_assert_arr_eq(serialised_header, expected_serialised_header,
                      HEADER_SIZE);
-
-    free(serialised_header);
 }
 
 Test(TestHeader, test_header_deserialisation)

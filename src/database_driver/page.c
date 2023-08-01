@@ -9,7 +9,7 @@
 #include "utils/stream_ext.h"
 
 // PRIVATE METHODS SIGNATURE START.
-static inline i64 page_calc_offset(i32 page_id);
+static inline i64 calc_page_offset(i32 page_id);
 static void seek_to_page(i32 fd, i32 page_id);
 static void write_page_buf(const u8* buf, i32 page_id, i32 fd);
 static u8* read_page_buf(i32 page_id, i32 fd);
@@ -38,14 +38,14 @@ void page_write(const Page* page, i32 fd)
 void page_free(Page* page) { free(page->payload - PAGE_HEADER_SIZE); }
 // PUBLIC METHODS END.
 
-static inline i64 page_calc_offset(i32 page_id)
+static inline i64 calc_page_offset(i32 page_id)
 {
     return HEADER_SIZE + page_id * PAGE_SIZE;
 }
 
 static void seek_to_page(i32 fd, i32 page_id)
 {
-    i64 offset = page_calc_offset(page_id);
+    i64 offset = calc_page_offset(page_id);
     lseek(fd, offset, SEEK_SET);
 }
 
