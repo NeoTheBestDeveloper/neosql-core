@@ -8,8 +8,21 @@
 #include "utils/os.h"
 
 #define TEST_DB_PATH ("../tests/assets/database.db")
+
 #define PAGE1_PAYLOAD_BLOB_PATH ("../tests/assets/page1_payload_blob.bin")
 #define PAGE2_PAYLOAD_BLOB_PATH ("../tests/assets/page2_payload_blob.bin")
+
+#define TABLE1_BLOCK_PAYLOAD_BLOB_PATH                                        \
+    ("../tests/assets/table1_block_payload_blob.bin")
+#define TABLE1_RECORD1_BLOCK_PAYLOAD_BLOB_PATH                                \
+    ("../tests/assets/table1_record1_block_payload_blob.bin")
+
+#define TABLE2_BLOCK_PAYLOAD_BLOB_PATH                                        \
+    ("../tests/assets/table2_block_payload_blob.bin")
+#define TABLE2_RECORD1_BLOCK_PAYLOAD_BLOB_PATH                                \
+    ("../tests/assets/table2_record1_block_payload_blob.bin")
+#define TABLE2_RECORD2_BLOCK_PAYLOAD_BLOB_PATH                                \
+    ("../tests/assets/table2_record2_block_payload_blob.bin")
 
 #define TMP_FILE_PATH_LEN (100)
 

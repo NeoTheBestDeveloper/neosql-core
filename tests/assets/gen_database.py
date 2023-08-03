@@ -475,6 +475,7 @@ def main() -> None:
     buf.write(bytes(header))
     buf.write(bytes(p1))
     buf.write(bytes(p2))
+    print(table2_record2_block.header)
 
 
     """ with open(VALID_DB_PATH, "wb") as fout: """

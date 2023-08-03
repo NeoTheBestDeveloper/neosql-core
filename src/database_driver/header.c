@@ -32,10 +32,8 @@ HeaderResult header_new(i32 fd)
         return (HeaderResult) { .status = res.status };
     }
 
-    Header header = header_deserialise(res.buf);
-
     return (HeaderResult) {
-        .header = header,
+        .header = header_deserialise(res.buf),
         .status = HEADER_OK,
     };
 }

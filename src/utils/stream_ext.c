@@ -56,6 +56,42 @@ Page stream_read_page(Stream* stream)
 void stream_write_page(Stream* stream, const Page* page)
 {
     stream_write_u16(stream, page->free_space);
-    stream_seek(stream, PAGE_HEADER_SIZE, STREAM_START);
+    u8 reserved[PAGE_HEADER_RESERVED_SIZE] = { 0 };
+    stream_write_bytes(stream, reserved, PAGE_HEADER_RESERVED_SIZE);
     stream_write_bytes(stream, page->payload, PAGE_PAYLOAD_SIZE);
+}
+
+BlockHeader stream_read_block_header(Stream* stream)
+{
+    BlockHeader header;
+
+    header.payload_size = stream_read_u64(stream);
+    header.next = stream_read_addr(stream);
+    header.parted = stream_read_bool(stream);
+
+    return header;
+}
+
+void stream_write_block_header(Stream* stream, const BlockHeader* header)
+{
+    stream_write_u64(stream, header->payload_size);
+    stream_write_addr(stream, header->next);
+    stream_write_bool(stream, header->parted);
+}
+
+BlockPartHeader stream_read_block_part_header(Stream* stream)
+{
+    BlockPartHeader header;
+
+    header.payload_size = stream_read_u64(stream);
+    header.next = stream_read_addr(stream);
+
+    return header;
+}
+
+void stream_write_block_part_header(Stream* stream,
+                                    const BlockPartHeader* header)
+{
+    stream_write_u64(stream, header->payload_size);
+    stream_write_addr(stream, header->next);
 }

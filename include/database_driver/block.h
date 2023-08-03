@@ -4,11 +4,8 @@
 
 #include "database_driver/addr.h"
 
-typedef struct {
-    u64 payload_size;
-    Addr next;
-    bool parted;
-} BlockHeader;
+#define BLOCK_HEADER_SIZE (15)
+#define BLOCK_PART_HEADER_SIZE (14)
 
 typedef struct {
     u64 payload_size;
@@ -16,9 +13,10 @@ typedef struct {
 } BlockPartHeader;
 
 typedef struct {
-    BlockPartHeader header;
-    u8* payload;
-} BlockPart;
+    u64 payload_size;
+    Addr next;
+    bool parted;
+} BlockHeader;
 
 typedef struct {
     BlockHeader header;
@@ -26,7 +24,7 @@ typedef struct {
 } Block;
 
 // Read block from database by given address.
-Block block_new(Addr addr);
+Block block_new(Addr addr, i32 fd);
 void block_free(Block* block);
 
-void block_write(const Block* block, Addr addr);
+void block_write(const Block* block, Addr addr, i32 fd);

@@ -1,8 +1,7 @@
+#include <stdlib.h>
 #include <unistd.h>
 
-#include "criterion/assert.h"
 #include "criterion/criterion.h"
-#include "criterion/internal/assert.h"
 #include "criterion/new/assert.h"
 
 #include "database_driver/database_defaults.h"
@@ -15,13 +14,29 @@
 static const u16 page1_free_space_expected = 2837;
 static const u16 page2_free_space_expected = 0;
 
-Test(TestPage, test_page_read1)
+static u8* get_page1_payload()
 {
     i32 payload_fd = open_db_file(PAGE1_PAYLOAD_BLOB_PATH);
-    u8 page1_payload_expected[PAGE_PAYLOAD_SIZE];
-    read(payload_fd, page1_payload_expected, PAGE_PAYLOAD_SIZE);
+    u8* page1_payload = malloc(PAGE_PAYLOAD_SIZE);
+    read(payload_fd, page1_payload, PAGE_PAYLOAD_SIZE);
     close(payload_fd);
 
+    return page1_payload;
+}
+
+static u8* get_page2_payload()
+{
+    i32 payload_fd = open_db_file(PAGE2_PAYLOAD_BLOB_PATH);
+    u8* page2_payload = malloc(PAGE_PAYLOAD_SIZE);
+    read(payload_fd, page2_payload, PAGE_PAYLOAD_SIZE);
+    close(payload_fd);
+
+    return page2_payload;
+}
+
+Test(TestPage, test_page_read1)
+{
+    u8* page1_payload_expected = get_page1_payload();
     i32 fd = open_db_file(TEST_DB_PATH);
     Page page = page_new(0, fd);
 
@@ -30,15 +45,13 @@ Test(TestPage, test_page_read1)
     cr_assert(eq(i32, page.id, 0));
 
     page_free(&page);
+    free(page1_payload_expected);
     close(fd);
 }
 
 Test(TestPage, test_page_read2)
 {
-    i32 payload_fd = open_db_file(PAGE2_PAYLOAD_BLOB_PATH);
-    u8 page2_payload_expected[PAGE_PAYLOAD_SIZE];
-    read(payload_fd, page2_payload_expected, PAGE_PAYLOAD_SIZE);
-    close(payload_fd);
+    u8* page2_payload_expected = get_page2_payload();
 
     i32 fd = open_db_file(TEST_DB_PATH);
     Page page = page_new(1, fd);
@@ -48,6 +61,7 @@ Test(TestPage, test_page_read2)
     cr_assert(eq(i32, page.id, 1));
 
     page_free(&page);
+    free(page2_payload_expected);
     close(fd);
 }
 
@@ -55,10 +69,7 @@ Test(TestPage, test_page_write)
 {
     WITH_TMP_FILE(tmp_fd)
     {
-        i32 payload_fd = open_db_file(PAGE2_PAYLOAD_BLOB_PATH);
-        u8 page2_payload_expected[PAGE_PAYLOAD_SIZE];
-        read(payload_fd, page2_payload_expected, PAGE_PAYLOAD_SIZE);
-        close(payload_fd);
+        u8* page2_payload_expected = get_page2_payload();
 
         u8 header_fake[HEADER_SIZE] = { 0 };
         write(tmp_fd, header_fake, HEADER_SIZE);
@@ -83,5 +94,7 @@ Test(TestPage, test_page_write)
         cr_assert(eq(u16, page.free_space, free_space_written));
         cr_assert_arr_eq(page_written_buf + PAGE_HEADER_SIZE,
                          page2_payload_expected, PAGE_PAYLOAD_SIZE);
+
+        free(page2_payload_expected);
     }
 }
