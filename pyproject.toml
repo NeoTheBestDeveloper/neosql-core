@@ -1,0 +1,68 @@
+[build-system]
+requires = ['maturin>=1,<2']
+build-backend = 'maturin'
+
+[project]
+name = 'neosql_core'
+requires-python = '>=3.10'
+authors = [
+    {name = 'Nikulin Oleg', email = 'kiankasey91@gmail.com'}
+]
+readme = "README.md"
+version = "0.1.0"
+classifiers = [
+    'Development Status :: 3 - Alpha',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3 :: Only',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Rust',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Information Technology',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: POSIX :: Linux',
+    'Operating System :: Microsoft :: Windows',
+    'Operating System :: MacOS',
+    'Typing :: Typed',
+]
+dependencies = [
+    'typing-extensions >=4.6.0,!=4.7.0'
+]
+
+[tool.maturin]
+python-source = "neosql_core"
+module-name = "neosql_core._neosql_core"
+bindings = 'pyo3'
+features = ["pyo3/extension-module"]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.0.1"
+tag_format = "$version"
+
+[tool.pylint]
+max-line-length = 120
+disable = [
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "too-few-public-methods",
+    "cyclic-import",
+    "unspecified-encoding",
+    "redefined-outer-name",
+    "useless-return",
+    "W0511",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310,py311"
+
+[tool.black]
+color = true
+line-length = 120
+
+[tool.mypy]
+
+[tool.pyright]

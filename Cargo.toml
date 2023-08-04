@@ -1,0 +1,26 @@
+[package]
+name = "neosql-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+homepage = "https://github.com/NeoTheBestDeveloper/neosql-core"
+repository = "https://github.com/NeoTheBestDeveloper/neosql-core"
+readme = "README.md"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[lib]
+name = "_neosql_core"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies.pyo3]
+version = "0.15.1"
+features = ["extension-module", "auto-initialize"]
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+strip = true
+opt-level = 3

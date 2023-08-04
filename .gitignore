@@ -21,3 +21,9 @@ build-mingw
 build-mingw_release
 libnclib
 venv
+__pycache__
+
+
+# Added by cargo
+
+/target
