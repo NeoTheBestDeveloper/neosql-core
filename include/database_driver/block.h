@@ -27,4 +27,5 @@ typedef struct {
 Block block_new(Addr addr, i32 fd);
 void block_free(Block* block);
 
+Addr block_find_space(const Block* block, i32 fd);
 void block_write(const Block* block, Addr addr, i32 fd);

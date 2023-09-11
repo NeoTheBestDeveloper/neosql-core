@@ -3,4 +3,5 @@ database_driver_src = files(
   'block.c',
   'header.c',
   'page.c',
+  'pages.c',
 )

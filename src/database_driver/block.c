@@ -1,10 +1,11 @@
 #include <stdlib.h>
 
+#include "nclib/stream.h"
+
 #include "database_driver/addr.h"
 #include "database_driver/block.h"
 #include "database_driver/database_defaults.h"
 #include "database_driver/page.h"
-#include "nclib/stream.h"
 #include "utils/stream_ext.h"
 
 // PRIVATE METHODS SIGNATURE START.
@@ -28,7 +29,7 @@ Block block_new(Addr addr, i32 fd)
 
 void block_free(Block* block) { free(block->payload); }
 
-void block_write(const Block* block, Addr addr, i32 fd) { }
+Addr block_append(const Block* block, i32 fd) { }
 // PUBLIC METHODS END.
 
 static BlockHeader read_block_header(Addr addr, i32 fd)

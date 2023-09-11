@@ -475,7 +475,9 @@ def main() -> None:
     buf.write(bytes(header))
     buf.write(bytes(p1))
     buf.write(bytes(p2))
-    print(table2_record2_block.header)
+    b = Block(pack_chars("HI abobuses!!!")) 
+    b.header.next = NULL_ADDR
+    print(p1.free_space, p2.free_space)
 
 
     """ with open(VALID_DB_PATH, "wb") as fout: """

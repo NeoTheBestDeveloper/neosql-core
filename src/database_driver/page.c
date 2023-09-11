@@ -10,7 +10,6 @@
 
 // PRIVATE METHODS SIGNATURE START.
 static inline i64 calc_page_offset(i32 page_id);
-static void seek_to_page(i32 fd, i32 page_id);
 static void write_page_buf(const u8* buf, i32 page_id, i32 fd);
 static u8* read_page_buf(i32 page_id, i32 fd);
 static Page page_deserialise(u8* buf);
@@ -28,6 +27,15 @@ Page page_new(i32 page_id, i32 fd)
     return page;
 }
 
+Page page_new_zero(i32 page_id)
+{
+    return (Page) {
+        .free_space = PAGE_PAYLOAD_SIZE,
+        .id = page_id,
+        .payload = calloc(PAGE_PAYLOAD_SIZE, 1),
+    };
+}
+
 void page_write(const Page* page, i32 fd)
 {
     u8* serialized_page_buf = page_serialise(page);
@@ -43,7 +51,7 @@ static inline i64 calc_page_offset(i32 page_id)
     return HEADER_SIZE + page_id * PAGE_SIZE;
 }
 
-static void seek_to_page(i32 fd, i32 page_id)
+void seek_to_page(i32 fd, i32 page_id)
 {
     i64 offset = calc_page_offset(page_id);
     lseek(fd, offset, SEEK_SET);
